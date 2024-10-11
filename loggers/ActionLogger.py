@@ -1,7 +1,7 @@
 from matrx.logger.logger import GridWorldLogger
 from matrx.grid_world import GridWorld
 
-class ActionLogger(GridWorldLogger):
+class ActionLoggerV2(GridWorldLogger):
     '''
     Logger for saving the actions of all agents during each tick of the task.
     '''

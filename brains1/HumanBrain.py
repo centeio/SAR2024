@@ -349,7 +349,7 @@ class HumanBrain(HumanAgentBrain):
                         water_locs.append(water['location'])
             if state[{"name": self.__name}]['location'] in water_locs and state[{"name": self.__name}]['location'] not in [(3,5),(9,5),(15,5),(21,5),(3,6),(9,6),(15,6),(3,17),(9,17),(15,17),(3,18),(9,18),(15,18),(21,18)]:
                 action == Idle.__name__
-                action_kwargs['duration_in_ticks'] = 5
+                action_kwargs['action_duration'] = 5
 
         return action, action_kwargs
 

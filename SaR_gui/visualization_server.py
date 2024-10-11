@@ -10,8 +10,8 @@ userinput or other information to MATRX. The api is a Flask (Python) webserver.
 For visualization, see the seperate MATRX visualization folder / package.
 '''
 
-debug = True
-port = 3000
+debug = False
+port = 8000
 app = Flask(__name__, template_folder='templates')
 
 # the path to the media folder of the user (outside of the MATRX package)

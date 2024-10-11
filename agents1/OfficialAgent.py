@@ -194,11 +194,11 @@ class BaselineAgent(ArtificialBrain):
                         # Plan path to victim because the exact location is known (i.e., the agent found this victim)
                         if 'location' in self._found_victim_logs[vic].keys():
                             self._phase = Phase.PLAN_PATH_TO_VICTIM
-                            return Idle.__name__, {'duration_in_ticks': 25}
+                            return Idle.__name__, {'action_duration': 25}
                         # Plan path to area because the exact victim location is not known, only the area (i.e., human found this  victim)
                         if 'location' not in self._found_victim_logs[vic].keys():
                             self._phase = Phase.PLAN_PATH_TO_ROOM
-                            return Idle.__name__, {'duration_in_ticks': 25}
+                            return Idle.__name__, {'action_duration': 25}
                     # Define a previously found victim as target victim
                     if vic in self._found_victims and vic not in self._todo:
                         self._goal_vic = vic
@@ -212,11 +212,11 @@ class BaselineAgent(ArtificialBrain):
                         # Plan path to victim because the exact location is known (i.e., the agent found this victim)
                         if 'location' in self._found_victim_logs[vic].keys():
                             self._phase = Phase.PLAN_PATH_TO_VICTIM
-                            return Idle.__name__, {'duration_in_ticks': 25}
+                            return Idle.__name__, {'action_duration': 25}
                         # Plan path to area because the exact victim location is not known, only the area (i.e., human found this  victim)
                         if 'location' not in self._found_victim_logs[vic].keys():
                             self._phase = Phase.PLAN_PATH_TO_ROOM
-                            return Idle.__name__, {'duration_in_ticks': 25}
+                            return Idle.__name__, {'action_duration': 25}
                     # If there are no target victims found, visit an unsearched area to search for victims
                     if vic not in self._found_victims or vic in self._found_victims and vic in self._todo and len(
                             self._searched_rooms) > 0:
@@ -687,7 +687,7 @@ class BaselineAgent(ArtificialBrain):
                 if not self._waiting and not self._rescue:
                     self._recent_vic = None
                     self._phase = Phase.FIND_NEXT_GOAL
-                return Idle.__name__, {'duration_in_ticks': 25}
+                return Idle.__name__, {'action_duration': 25}
 
             if Phase.PLAN_PATH_TO_VICTIM == self._phase:
                 # Plan the path to a found victim using its location

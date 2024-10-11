@@ -10,7 +10,7 @@ class Idle(Action):
     """ Let's an agent be idle for a specified number of ticks.
     Parameters
     ----------
-    duration_in_ticks : int
+    action_duration : int
         Optional. Default: ``1``. Should be zero or larger.
         The default duration of this action in ticks during which the
         :class:`matrx.grid_world.GridWorld` blocks the agent performing other
@@ -25,8 +25,8 @@ class Idle(Action):
         in the :meth:`matrx.agents.agent_brain.AgentBrain.decide_on_action` method, as so:
         ``return >action_name<, {'action_duration': >ticks<}``
     """
-    def __init__(self, duration_in_ticks=1):
-        super().__init__(duration_in_ticks)
+    def __init__(self, action_duration=1):
+        super().__init__(action_duration)
 
     def is_possible(self, grid_world, agent_id, **kwargs):
         return IdleResult(IdleResult.RESULT_SUCCESS, True)
@@ -46,7 +46,7 @@ class RemoveObjectTogether(Action):
     any object except for the agent performing the action.
     Parameters
     ----------
-    duration_in_ticks : int
+    action_duration : int
         Optional. Default: ``1``. Should be zero or larger.
         The default duration of this action in ticks during which the
         :class:`matrx.grid_world.GridWorld` blocks the agent performing other
@@ -62,8 +62,8 @@ class RemoveObjectTogether(Action):
         ``return >action_name<, {'action_duration': >ticks<}``
     """
 
-    def __init__(self, duration_in_ticks=0):
-        super().__init__(duration_in_ticks)
+    def __init__(self, action_duration=0):
+        super().__init__(action_duration)
 
     def mutate(self, grid_world, agent_id, world_state, **kwargs):
         """ Removes the specified object.
@@ -239,7 +239,7 @@ class CarryObject(Action):
     the :class:`matrx.grid_world.GridWorld`.
     Parameters
     ----------
-    duration_in_ticks : int
+    action_duration : int
         Optional, default: ``1``. Should be zero or larger.
         The default duration of this action in ticks during which the
         :class:`matrx.grid_world.GridWorld` blocks the agent performing other
@@ -260,8 +260,8 @@ class CarryObject(Action):
     who holds objects, those objects it is holding are also moved with it.
     """
 
-    def __init__(self, duration_in_ticks=0):
-        super().__init__(duration_in_ticks)
+    def __init__(self, action_duration=0):
+        super().__init__(action_duration)
 
     def is_possible(self, grid_world, agent_id, world_state, **kwargs):
         """ Checks if the object can be grabbed.
@@ -460,7 +460,7 @@ class Drop(Action):
         :class:`matrx.grid_world.GridWorld`.
         Parameters
         ----------
-        duration_in_ticks : int
+        action_duration : int
             Optional, default: ``1``. Should be zero or larger.
             The default duration of this action in ticks during which the
             :class:`matrx.grid_world.GridWorld` blocks the agent performing other
@@ -481,8 +481,8 @@ class Drop(Action):
         who holds objects, those objects it is holding are also moved with it.
         """
     
-    def __init__(self, duration_in_ticks=0):
-        super().__init__(duration_in_ticks)
+    def __init__(self, action_duration=0):
+        super().__init__(action_duration)
 
     def is_possible(self, grid_world, agent_id, world_state, **kwargs):
         """ Checks if the object can be dropped.
@@ -680,7 +680,7 @@ class CarryObjectTogether(Action):
     the :class:`matrx.grid_world.GridWorld`.
     Parameters
     ----------
-    duration_in_ticks : int
+    action_duration : int
         Optional, default: ``1``. Should be zero or larger.
         The default duration of this action in ticks during which the
         :class:`matrx.grid_world.GridWorld` blocks the agent performing other
@@ -701,8 +701,8 @@ class CarryObjectTogether(Action):
     who holds objects, those objects it is holding are also moved with it.
     """
 
-    def __init__(self, duration_in_ticks=0):
-        super().__init__(duration_in_ticks)
+    def __init__(self, action_duration=0):
+        super().__init__(action_duration)
 
     def is_possible(self, grid_world, agent_id, world_state, **kwargs):
         """ Checks if the object can be grabbed.
@@ -908,7 +908,7 @@ class DropObjectTogether(Action):
         :class:`matrx.grid_world.GridWorld`.
         Parameters
         ----------
-        duration_in_ticks : int
+        action_duration : int
             Optional, default: ``1``. Should be zero or larger.
             The default duration of this action in ticks during which the
             :class:`matrx.grid_world.GridWorld` blocks the agent performing other
@@ -929,8 +929,8 @@ class DropObjectTogether(Action):
         who holds objects, those objects it is holding are also moved with it.
         """
     
-    def __init__(self, duration_in_ticks=0):
-        super().__init__(duration_in_ticks)
+    def __init__(self, action_duration=0):
+        super().__init__(action_duration)
 
     def is_possible(self, grid_world, agent_id, world_state, **kwargs):
         """ Checks if the object can be dropped.

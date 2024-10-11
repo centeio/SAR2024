@@ -307,11 +307,11 @@ class TutorialAgent(ArtificialBrain):
                         # Plan path to victim because the exact location is known (i.e., the agent found this victim)
                         if 'location' in self._foundVictimLocs[vic].keys():
                             self._phase=Phase.PLAN_PATH_TO_VICTIM
-                            return Idle.__name__,{'duration_in_ticks':25}  
+                            return Idle.__name__,{'action_duration':25}  
                         # Plan path to area because the exact victim location is not known, only the area (i.e., human found this victim)
                         if 'location' not in self._foundVictimLocs[vic].keys():
                             self._phase=Phase.PLAN_PATH_TO_ROOM
-                            return Idle.__name__,{'duration_in_ticks':25}     
+                            return Idle.__name__,{'action_duration':25}     
                 # If there are no target victims found, visit an unsearched area to search for victims         
                 self._phase=Phase.PICK_UNSEARCHED_ROOM
 
@@ -525,7 +525,7 @@ class TutorialAgent(ArtificialBrain):
                 self._searchedRooms.append(self._door['room_name'])
                 self._recentVic = None
                 self._phase=Phase.FIND_NEXT_GOAL
-                return Idle.__name__,{'duration_in_ticks':25}
+                return Idle.__name__,{'action_duration':25}
                 
             if Phase.PLAN_PATH_TO_VICTIM==self._phase:
                 # Communicate which vctim the agent is going to pick up
