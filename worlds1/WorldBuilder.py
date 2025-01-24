@@ -43,7 +43,8 @@ key_action_map = {
 # Some settings
 nr_rooms = 9
 wall_color = "#464646"
-background_color = "#9c5a3c"
+background_color = "#C2A9A1"
+background_image = "./images/background.png"
 drop_off_color = "#1F262A"
 object_size = 0.9
 nr_teams = 1
@@ -60,7 +61,8 @@ def add_drop_off_zones(builder, task_type):
         nr_drop_zones = 1
         for nr_zone in range(nr_drop_zones):
             builder.add_area((16,9), width=3, height=2, name=f"Drop off {nr_zone}", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=nr_zone, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
-  
+
+
 # Add the agents to the world
 def add_agents(builder, condition, task_type, name, folder):
 
@@ -88,29 +90,31 @@ def create_builder(task_type, condition, name, folder):
     goal = CollectionGoal(max_nr_ticks=np.inf)
     # Create the world builder
     if task_type=="mission_1":
-        builder = WorldBuilder(shape=[20,20], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal, visualization_bg_clr=background_color)
-        # builder = WorldBuilder(shape=[19,19], tick_duration=tick_duration, run_matrx_api=True,random_seed=random_seed, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal, visualization_bg_clr='#9a9083')
+        builder = WorldBuilder(shape=[40,40], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
+        #builder = WorldBuilder(shape=[19,19], tick_duration=tick_duration, run_matrx_api=True,random_seed=random_seed, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal, visualization_bg_clr='#9a9083')
 
     # Add all areas and objects to the tutorial world
-    if task_type == "mission_1":
-        builder.add_room(top_left_location=(0, 0), width=20, height=20, name="world_bounds", wall_visualize_colour="#546d8e")
-        
-        builder.add_room(top_left_location=(1,1), width=7, height=4, name='area A1', door_locations=[(2,4),(3,4),(4,4),(5,4)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_opacity=0.0, door_open_colour=background_color)
-        builder.add_room(top_left_location=(1,5), width=4, height=3, name='area A2', door_locations=[(2,5),(3,5),(4,5)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=background_color,area_visualize_opacity=0.0,door_open_colour=background_color)
+    # if task_type == "mission_1":
+        builder.add_room(top_left_location=(0, 0), width=40, height=40, name="world_bounds", wall_visualize_colour=None)
 
-        builder.add_room(top_left_location=(12,1), width=7, height=4, name='area B1', door_locations=[(14,4),(15,4),(16,4),(17,4)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=background_color,area_visualize_opacity=0.0,door_open_colour=background_color)
-        builder.add_room(top_left_location=(15,5), width=4, height=3, name='area B2', door_locations=[(15,5),(16,5),(17,5)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=background_color,area_visualize_opacity=0.0,door_open_colour=background_color)
+        builder.add_area((14,2), width=12, height=5, name="A1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        builder.add_area((14,8), width=12, height=5, name="A2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
-        builder.add_room(top_left_location=(1,15), width=7, height=4, name='area C1', door_locations=[(2,15),(3,15),(4,15),(5,15)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=background_color,area_visualize_opacity=0.0,door_open_colour=background_color)
-        builder.add_room(top_left_location=(1,12), width=4, height=3, name='area C2', door_locations=[(2,14),(3,14),(4,14)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=background_color,area_visualize_opacity=0.0,door_open_colour=background_color)
-        
-        builder.add_room(top_left_location=(12,15), width=7, height=4, name='area D1', door_locations=[(14,15),(15,15),(16,15),(17,15)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=background_color,area_visualize_opacity=0.0,door_open_colour=background_color)
-        builder.add_room(top_left_location=(15,12), width=4, height=3, name='area D2', door_locations=[(15,14),(16,14),(17,14)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=background_color,area_visualize_opacity=0.0,door_open_colour=background_color)
+        builder.add_area((27,14), width=5, height=12, name="B1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        builder.add_area((33,14), width=5, height=12, name="B2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
-        builder.add_object((3,3),'dog A1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
-        builder.add_object((3,5),'dog A2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
-        builder.add_object((5,3),'dog A2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
+        builder.add_area((14,27), width=12, height=5, name="C1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        builder.add_area((14,33), width=12, height=5, name="C2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
+        builder.add_area((2,14), width=5, height=12, name="D1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        builder.add_area((8,14), width=5, height=12, name="D2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+
+        builder.add_area((17,17), width=6, height=6, name="Drop off", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=1, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
+
+
+        #builder.add_object((14,16),'dog D1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
+        #builder.add_object((16,16),'dog D2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
+        #builder.add_object((16,14),'dog D3', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
 
     # Create folders where the logs are stored during the official condition
         # current_exp_folder = datetime.now().strftime("exp_"+condition+"_at_time_%Hh-%Mm-%Ss_date_%dd-%mm-%Yy")
@@ -124,14 +128,17 @@ def create_builder(task_type, condition, name, folder):
                # [(x,y) for x in list(range(2,6)) for y in list(range(15,18))] + [(x,y) for x in list(range(14,18)) for y in list(range(15,18))] + \
                # [(6,16),(6,17),(13,16),(13,17)] + + [(x,13) for x in list(range(2,4))] + [(x,13) for x in list(range(16,18))]
         
-        print(water)
-        for loc in water:
-            builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_shape='img', img_name="/images/pool_full.svg")
+        #print(water)
+        #for loc in water:
+        #    builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_shape='img', img_name="/images/pool_full.svg")
   
 
 
-    add_drop_off_zones(builder, task_type)
-    add_agents(builder, condition, task_type, name, folder)
+
+    #add_drop_off_zones(builder, task_type)
+
+
+    #add_agents(builder, condition, task_type, name, folder)
 
     return builder
 
