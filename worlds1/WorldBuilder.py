@@ -20,6 +20,7 @@ from actions1.CustomActions import RemoveObjectTogether
 from brains1.HumanBrain import HumanBrain
 from loggers.ActionLogger import ActionLoggerV2
 from datetime import datetime
+import random
 
 random_seed = 1
 verbose = False
@@ -45,8 +46,11 @@ nr_rooms = 9
 wall_color = "#464646"
 background_color = "#C2A9A1"
 background_image = "./images/background.png"
-drop_off_color = "#1F262A"
+pick_up_area_1_color = "#4b6473"
+pick_up_area_2_color = "#EDC001"
+drop_off_color = "#009900"
 object_size = 0.9
+victims_per_area = 4
 nr_teams = 1
 agents_per_team = 2
 human_agents_per_team = 1
@@ -73,17 +77,18 @@ def add_agents(builder, condition, task_type, name, folder):
         for agent_nr in range(nr_agents):
             if task_type=="mission_1":
                 brain = BaselineAgent(slowdown=8, condition=condition, name=name, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
-                loc = (17,9)
+                loc = (20,20)
             builder.add_agent(loc, brain, team=team_name, name="RescueBot",customizable_properties = ['score'], score=0, is_traversable=True, img_name="/images/robot-final4.svg")
 
         # Add human agents based on condition, do not change human brain values
         for human_agent_nr in range(human_agents_per_team):
             brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, strength=condition, name=name)
-            loc = (17,10)
+            loc = (19,20)
             builder.add_human_agent(loc, brain, team=team_name, name=name, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
 # Create the world
 def create_builder(task_type, condition, name, folder):
+    random.seed(random_seed)
     # Set numpy's random generator
     np.random.seed(random_seed)
     # Create the collection goal
@@ -97,22 +102,36 @@ def create_builder(task_type, condition, name, folder):
     # if task_type == "mission_1":
         builder.add_room(top_left_location=(0, 0), width=40, height=40, name="world_bounds", wall_visualize_colour=None)
 
-        builder.add_area((14,2), width=12, height=5, name="A1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
-        builder.add_area((14,8), width=12, height=5, name="A2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        areas = {"A1": {"top_left": (14,8), "width": 12, "height": 5, "color": pick_up_area_1_color}, "A2": {"top_left": (14,2), "width": 12, "height": 5, "color": pick_up_area_2_color},
+                 "B1": {"top_left": (27,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "B2": {"top_left": (33,14), "width": 5, "height": 12, "color": pick_up_area_2_color},
+                 "C1": {"top_left": (14,27), "width": 12, "height": 5, "color": pick_up_area_1_color}, "C2": {"top_left": (14,33), "width": 12, "height": 5, "color": pick_up_area_2_color},
+                 "D1": {"top_left": (8,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "D2": {"top_left": (2,14), "width": 5, "height": 12, "color": pick_up_area_2_color}}
 
-        builder.add_area((27,14), width=5, height=12, name="B1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
-        builder.add_area((33,14), width=5, height=12, name="B2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        # Add the areas
+        for area_name, area_data in areas.items():
+            builder.add_area(area_data["top_left"], width=area_data["width"], height=area_data["height"], name=area_name, visualize_opacity=0.5, visualize_colour=area_data["color"], is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
-        builder.add_area((14,27), width=12, height=5, name="C1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
-        builder.add_area((14,33), width=12, height=5, name="C2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+            # Add the victims
 
-        builder.add_area((2,14), width=5, height=12, name="D1", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
-        builder.add_area((8,14), width=5, height=12, name="D2", visualize_opacity=0.5, visualize_colour=drop_off_color, is_drop_zone=False, is_goal_block=False, is_collectable=False)
+            loc_victim_x = random.sample(range(area_data["top_left"][0], area_data["top_left"][0] + area_data["width"]), victims_per_area)
+            loc_victim_y = random.sample(range(area_data["top_left"][1], area_data["top_left"][1] + area_data["height"]), victims_per_area)
+            images_victims = random.sample(range(1, 7),victims_per_area)
 
+            print(area_name,loc_victim_x,loc_victim_y)
+            print(images_victims)
+
+
+            for v in range(victims_per_area):
+                print("v",v)
+                builder.add_object(location=(loc_victim_x[v],loc_victim_y[v]),name="victim_"+str(area_name)+"_"+str(v), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/victim_"+str(images_victims[v])+".png")
+
+
+
+        # Add the drop off zones
         builder.add_area((17,17), width=6, height=6, name="Drop off", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=1, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
 
 
-        #builder.add_object((14,16),'dog D1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
+        #builder.add_object((14,16),'dog D1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg", area="A1")
         #builder.add_object((16,16),'dog D2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
         #builder.add_object((16,14),'dog D3', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
 
@@ -121,16 +140,17 @@ def create_builder(task_type, condition, name, folder):
         # logger_save_folder = os.path.join("logs", current_exp_folder)
         # builder.add_logger(ActionLoggerV2, log_strategy=1, save_path=logger_save_folder, file_name_prefix="actions_")
         
-    # Add all area and objects to the official world
-        water = [(x,8) for x in list(range(1,4))] + [(x,9) for x in list(range(1,8))] + [(x,10) for x in list(range(1,11))] + \
-                [(x,11) for x in list(range(1,19))] + [(x,12) for x in list(range(5,15))] + [(x,13) for x in list(range(5,15))] + \
-                [(x,14) for x in list(range(5,15))] + [(x,y) for x in list(range(8,12)) for y in list(range(15,19))]
+    # Add water area
+        water = [(x, y) for x in range(29, 40) for y in range(6, 14)] + [(x, y) for x in range(27, 40) for y in range(14, 21)] + \
+                [(x, y) for x in range(24, 40) for y in range(21, 23)] + [(x, y) for x in range(21, 40) for y in range(23, 25)] + \
+                [(x, y) for x in range(16, 40) for y in range(25, 27)] + [(x, y) for x in range(14, 40) for y in range(27, 30)] + \
+                [(x, y) for x in range(10, 40) for y in range(30, 35)] + [(x, y) for x in range(8, 40) for y in range(35, 40)]    
                # [(x,y) for x in list(range(2,6)) for y in list(range(15,18))] + [(x,y) for x in list(range(14,18)) for y in list(range(15,18))] + \
                # [(6,16),(6,17),(13,16),(13,17)] + + [(x,13) for x in list(range(2,4))] + [(x,13) for x in list(range(16,18))]
         
         #print(water)
-        #for loc in water:
-        #    builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_shape='img', img_name="/images/pool_full.svg")
+        for loc in water:
+            builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_opacity=0)
   
 
 
@@ -138,7 +158,7 @@ def create_builder(task_type, condition, name, folder):
     #add_drop_off_zones(builder, task_type)
 
 
-    #add_agents(builder, condition, task_type, name, folder)
+    add_agents(builder, condition, task_type, name, folder)
 
     return builder
 
