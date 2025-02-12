@@ -409,8 +409,7 @@ class ArtificialAgentBrain(AgentBrain):
             })
         return context_menu
 
-    def _factory_initialise(self, agent_name, agent_id, action_set, sense_capability, agent_properties,
-                            customizable_properties, rnd_seed, callback_is_action_possible):
+    def _factory_initialise(self, agent_name, agent_id, action_set, sense_capability, agent_properties, rnd_seed, callback_is_action_possible):
         """ Private MATRX function.
         Initialization of the brain by the WorldBuilder.
         Called by the WorldFactory to initialise this agent with all required properties in addition with any custom
@@ -428,8 +427,6 @@ class ArtificialAgentBrain(AgentBrain):
             The SenseCapability of the agent denoting what it can see withing what range.
         agent_properties : dict
             The dictionary of properties containing all mandatory and custom properties.
-        customizable_properties : list
-            A list of keys in agent_properties that this agent is allowed to change.
         rnd_seed : int
             The random seed used to set the random number generator self.rng
         callback_is_action_possible : callable
@@ -462,7 +459,7 @@ class ArtificialAgentBrain(AgentBrain):
         # it is not writable, it can only be  updated through performing an action which updates that property (done by
         # the environment).
         # NOTE: Changing which properties are writable cannot be done during runtime! Only when adding it to the world.
-        self.keys_of_agent_writable_props = customizable_properties
+        #self.keys_of_agent_writable_props = customizable_properties
 
         # A callback to the GridWorld instance that can check whether any action (with its arguments) will succeed and
         # if not why not (in the form of an ActionResult).

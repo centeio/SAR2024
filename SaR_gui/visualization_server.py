@@ -1,6 +1,10 @@
 import threading
 import logging
+import os
+import signal
 from flask import Flask, render_template, request, jsonify, send_from_directory
+from werkzeug.serving import make_server
+
 
 '''
 This file holds the code for the MATRX RESTful api. 
@@ -91,20 +95,16 @@ def start_view():
 
 
 
-@app.route('/shutdown_visualizer', methods=['GET', 'POST'])
+@app.route('/shutdown_visualizer', methods=['POST'])
 def shutdown():
     """ Shuts down the visualizer by stopping the Flask thread
 
     Returns
-        True
+        string
     -------
     """
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('Unable to shutdown visualizer server. Not running with the Werkzeug Server')
-    func()
-    print("Visualizer server shutting down...")
-    return jsonify(True)
+    s.shutdown()
+    return "Server shutting down..."
 
 
 @app.route('/fetch_external_media/<path:filename>')
@@ -143,13 +143,14 @@ def run_matrx_visualizer(verbose, media_folder):
     Creates a seperate Python thread in which the visualization server (Flask) is started, serving the JS visualization
     :return: MATRX visualization Python thread
     """
-    global debug, ext_media_folder
+    global debug, ext_media_folder, s
     debug = verbose
     ext_media_folder = media_folder
 
     print("Starting visualization server")
     print("Initialized app:", app)
-    vis_thread = threading.Thread(target=_flask_thread)
+    s = make_server('0.0.0.0', port, app)
+    vis_thread = threading.Thread(target=s.serve_forever)
     vis_thread.start()
     return vis_thread
 

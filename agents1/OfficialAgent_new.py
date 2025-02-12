@@ -87,57 +87,13 @@ class BaselineAgent(ArtificialBrain):
     def decide_on_actions(self, state):
         # Identify team members
         agent_name = state[self.agent_id]['obj_id']
+
         for member in state['World']['team_members']:
             if member != agent_name and member not in self._team_members:
                 self._team_members.append(member)
-        # Create a list of received messages from the human team member
-        for mssg in self.received_messages:
-            for member in self._team_members:
-                if mssg.from_id == member and mssg.content not in self._received_messages:
-                    self._received_messages.append(mssg.content)
+
         # Process messages from team members
         self._process_messages(state, self._team_members, self._condition)
-        # Initialize and update trust beliefs for team members
-        trustBeliefs = self._loadBelief(self._team_members, self._folder)
-        self._trustBelief(self._team_members, trustBeliefs, self._folder, self._received_messages)
-
-        # Check whether human is close in distance
-        if state[{'is_human_agent': True}]:
-            self._distance_human = 'close'
-        if not state[{'is_human_agent': True}]:
-            # Define distance between human and agent based on last known area locations
-            if self._agent_loc in [1, 2, 3, 4, 5, 6, 7] and self._human_loc in [8, 9, 10, 11, 12, 13, 14]:
-                self._distance_human = 'far'
-            if self._agent_loc in [1, 2, 3, 4, 5, 6, 7] and self._human_loc in [1, 2, 3, 4, 5, 6, 7]:
-                self._distance_human = 'close'
-            if self._agent_loc in [8, 9, 10, 11, 12, 13, 14] and self._human_loc in [1, 2, 3, 4, 5, 6, 7]:
-                self._distance_human = 'far'
-            if self._agent_loc in [8, 9, 10, 11, 12, 13, 14] and self._human_loc in [8, 9, 10, 11, 12, 13, 14]:
-                self._distance_human = 'close'
-
-        # Define distance to drop zone based on last known area location
-        if self._agent_loc in [1, 2, 5, 6, 8, 9, 11, 12]:
-            self._distance_drop = 'far'
-        if self._agent_loc in [3, 4, 7, 10, 13, 14]:
-            self._distance_drop = 'close'
-
-        # Check whether victims are currently being carried together by human and agent 
-        for info in state.values():
-            if 'is_human_agent' in info and self._human_name in info['name'] and len(
-                    info['is_carrying']) > 0 and 'critical' in info['is_carrying'][0]['obj_id'] or \
-                    'is_human_agent' in info and self._human_name in info['name'] and len(
-                info['is_carrying']) > 0 and 'mild' in info['is_carrying'][0][
-                'obj_id'] and self._rescue == 'together' and not self._moving:
-                # If victim is being carried, add to collected victims memory
-                if info['is_carrying'][0]['img_name'][8:-4] not in self._collected_victims:
-                    self._collected_victims.append(info['is_carrying'][0]['img_name'][8:-4])
-                self._carrying_together = True
-            if 'is_human_agent' in info and self._human_name in info['name'] and len(info['is_carrying']) == 0:
-                self._carrying_together = False
-        # If carrying a victim together, let agent be idle (because joint actions are essentially carried out by the human)
-        if self._carrying_together == True:
-            return None, {}
-
         # Send the hidden score message for displaying and logging the score during the task, DO NOT REMOVE THIS
         self._send_message('Our score is ' + str(state['rescuebot']['score']) + '.', 'RescueBot')
 

@@ -14,7 +14,7 @@ from matrx.actions.object_actions import RemoveObject
 from matrx.objects import EnvObject
 from matrx.world_builder import RandomProperty
 from matrx.goals import WorldGoal
-from agents1.OfficialAgent import BaselineAgent
+from agents1.OfficialAgent_new import BaselineAgent
 from agents1.TutorialAgent import TutorialAgent
 from actions1.CustomActions import RemoveObjectTogether
 from brains1.HumanBrain import HumanBrain
@@ -42,7 +42,7 @@ key_action_map = {
     }
 
 # Some settings
-nr_rooms = 9
+nr_areas = 8
 wall_color = "#464646"
 background_color = "#C2A9A1"
 background_image = "./images/background.png"
@@ -50,7 +50,7 @@ pick_up_area_1_color = "#4b6473"
 pick_up_area_2_color = "#EDC001"
 drop_off_color = "#009900"
 object_size = 0.9
-victims_per_area = 4
+victims_per_area = 2
 nr_teams = 1
 agents_per_team = 2
 human_agents_per_team = 1
@@ -78,13 +78,13 @@ def add_agents(builder, condition, task_type, name, folder):
             if task_type=="mission_1":
                 brain = BaselineAgent(slowdown=8, condition=condition, name=name, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
                 loc = (20,20)
-            builder.add_agent(loc, brain, team=team_name, name="RescueBot",customizable_properties = ['score'], score=0, is_traversable=True, img_name="/images/robot-final4.svg")
+            builder.add_agent(loc, brain, team=team_name, name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
         # Add human agents based on condition, do not change human brain values
         for human_agent_nr in range(human_agents_per_team):
             brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, strength=condition, name=name)
             loc = (19,20)
-            builder.add_human_agent(loc, brain, team=team_name, name=name, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
+            builder.add_human_agent(location=loc, agent_brain=brain, team=team_name, name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
 # Create the world
 def create_builder(task_type, condition, name, folder):
@@ -107,23 +107,23 @@ def create_builder(task_type, condition, name, folder):
                  "C1": {"top_left": (14,27), "width": 12, "height": 5, "color": pick_up_area_1_color}, "C2": {"top_left": (14,33), "width": 12, "height": 5, "color": pick_up_area_2_color},
                  "D1": {"top_left": (8,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "D2": {"top_left": (2,14), "width": 5, "height": 12, "color": pick_up_area_2_color}}
 
+        images_victims = list(range(1,victims_per_area * nr_areas + 1))
+        random.shuffle(images_victims)
+
+        v1 = 0
         # Add the areas
         for area_name, area_data in areas.items():
             builder.add_area(area_data["top_left"], width=area_data["width"], height=area_data["height"], name=area_name, visualize_opacity=0.5, visualize_colour=area_data["color"], is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
             # Add the victims
-
             loc_victim_x = random.sample(range(area_data["top_left"][0], area_data["top_left"][0] + area_data["width"]), victims_per_area)
             loc_victim_y = random.sample(range(area_data["top_left"][1], area_data["top_left"][1] + area_data["height"]), victims_per_area)
-            images_victims = random.sample(range(1, 7),victims_per_area)
-
-            print(area_name,loc_victim_x,loc_victim_y)
-            print(images_victims)
 
 
-            for v in range(victims_per_area):
-                print("v",v)
-                builder.add_object(location=(loc_victim_x[v],loc_victim_y[v]),name="victim_"+str(area_name)+"_"+str(v), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/victim_"+str(images_victims[v])+".png")
+            for v2 in range(victims_per_area):
+                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(area_name)+"_"+str(images_victims[v1]), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(images_victims[v1])+".png")
+                #builder.add_object(location=(loc_victim_x[v],loc_victim_y[v]),name="victim_"+str(area_name)+"_"+str(v), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/victim_"+str(images_victims[v])+".png")
+                v1 += 1
 
 
 

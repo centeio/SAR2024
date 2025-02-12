@@ -7,6 +7,9 @@ from SaR_gui import visualization_server
 from worlds1.WorldBuilder import create_builder
 from pathlib import Path
 from loggers.OutputLogger import output_logger
+from queue import Queue
+
+
 
 if __name__ == "__main__":
     fld = os.getcwd()
@@ -31,8 +34,8 @@ if __name__ == "__main__":
     world.run(builder.api_info)
     print("DONE!")
     print("Shutting down custom visualizer")
-    r = requests.get("http://localhost:" + str(visualization_server.port) + "/shutdown_visualizer")
-    vis_thread.join()
+    r = requests.post("http://localhost:" + str(visualization_server.port) + "/shutdown_visualizer")
+    vis_thread.join(timeout=5)
     if choice1=="official":
         # Generate one final output log file for the official task type
         output_logger(fld)
