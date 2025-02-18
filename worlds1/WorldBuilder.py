@@ -76,7 +76,7 @@ def add_agents(builder, condition, task_type, name, folder, victims):
         nr_agents = agents_per_team - human_agents_per_team
         for agent_nr in range(nr_agents):
             if task_type=="mission_1":
-                brain = BaselineAgent(slowdown=8, condition=condition, name=name, my_areas=["A1","A2","B1","B2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+                brain = BaselineAgent(slowdown=2, condition=condition, name=name, my_areas=["A1","A2","B1","B2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
                 loc = (20,20)
             builder.add_agent(loc, brain, team=team_name, name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
@@ -133,8 +133,8 @@ def create_builder(task_type, condition, name, folder):
                 drop_x = 17 + ((order_victims[v1]-1) % drop_width)
                 drop_y = 17 + ((order_victims[v1]-1) // drop_width)
                 print(drop_x, drop_y)
-                victims[order_victims[v1] - 1] = {"location": (loc_victim_x[v2],loc_victim_y[v2]), "name": "victim_"+str(area_name)+"_"+str(order_victims[v1]), "area": area_name, "order": order_victims[v1], "drop_location": (drop_x, drop_y)}
-                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(area_name)+"_"+str(order_victims[v1]), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png")
+                victims[order_victims[v1] - 1] = {"location": (loc_victim_x[v2],loc_victim_y[v2]), "name": "victim_"+str(order_victims[v1]), "area": area_name, "order": order_victims[v1], "drop_location": (drop_x, drop_y)}
+                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(order_victims[v1]), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png")
 
                 builder.add_object((drop_x,drop_y), "drop_off_"+str(order_victims[v1]), callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png", drop_zone_nr=1)
                

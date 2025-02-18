@@ -101,6 +101,9 @@ class BaselineAgent(ArtificialBrain):
         # Send the hidden score message for displaying and logging the score during the task, DO NOT REMOVE THIS
         self._send_message('Our score is ' + str(state['rescuebot']['score']) + '.', 'RescueBot')
 
+        zones = self._get_drop_zones(state)
+
+
         # Ongoing loop until the task is terminated, using different phases for defining the agent's behavior
         while True:
             if Phase.INTRO == self._phase:
@@ -124,12 +127,8 @@ class BaselineAgent(ArtificialBrain):
                 self._goal_vic = None
                 self._moving = True
 
-                # remaining_vics = self._ordered_victims
-                remaining = {}
-                # Identification of the location of the drop zones
-                # zones = self._get_drop_zones(state)
-                # Identification of which victims still need to be rescued and on which location they should be dropped
-                
+
+
                 # TODO check following victim within agent's areas to be rescued
                 for vic in self._ordered_victims[self._last_vic:]:
                     if vic['area'] in self._my_areas:
@@ -137,10 +136,9 @@ class BaselineAgent(ArtificialBrain):
                         # state.get_with_property()?
                         # TODO then go to location
                         self._goal_vic = vic
-                        self._last_vic = self._goal_vic['order']
 
                         self._phase = Phase.PLAN_PATH_TO_VICTIM
-                        return Idle.__name__, {'action_duration': 25}
+                        return Idle.__name__, {'action_duration': 10}
 
                         # TODO pick up victim
                         # TODO go to drop zone
@@ -151,6 +149,7 @@ class BaselineAgent(ArtificialBrain):
 
             if Phase.PLAN_PATH_TO_VICTIM == self._phase:
                 # Plan the path to a found victim using its location
+                print("PLAN_PATH_TO_VICTIM", self._goal_vic['location'])
                 self._navigator.reset_full()
                 self._navigator.add_waypoints([self._goal_vic['location']])
                 # Follow the path to the found victim
@@ -179,7 +178,7 @@ class BaselineAgent(ArtificialBrain):
                 for info in state.values():
                     # When the victim has to be carried by human and agent together, check whether human has arrived at the victim's location
                     if 'class_inheritance' in info and 'CollectableBlock' in info['class_inheritance'] and self._goal_vic['name'] in info['name'] and \
-                        utils.get_distance(info['location'],state[self.agent_id]['location']) < 2:
+                        utils.get_distance(info['location'],state[self.agent_id]['location']) < 1:
 
                         objects.append(info)
 
@@ -190,8 +189,7 @@ class BaselineAgent(ArtificialBrain):
                         self._collected_victims.append(self._goal_vic)
                         self._carrying = True
                         return CarryObject.__name__, {'object_id': self._goal_vic['name'], 'human_name': self._human_name}
-
-
+                
             if Phase.PLAN_PATH_TO_DROPPOINT == self._phase:
                 print("PLAN_PATH_TO_DROPPOINT", self._goal_vic['drop_location'])
                 self._navigator.reset_full()
@@ -208,11 +206,38 @@ class BaselineAgent(ArtificialBrain):
                 action = self._navigator.get_move_action(self._state_tracker)
                 if action is not None:
                     return action, {}
-                # Drop the victim at the drop zone
-                self._phase = Phase.DROP_VICTIM
+                
+                # check if the agent can drop the victim
+                # i.e. check if all previous victims are in place
+                goal_victims = state[{'is_goal_block': True}]
+
+                #print(goal_victims)
+                
+                for v in goal_victims:
+                    drop_order = v['name'][9:]
+                    print(drop_order, self._last_vic, self._goal_vic['order'])
+                    if int(drop_order) < self._goal_vic['order']:
+                        if int(drop_order) > self._last_vic:
+                            # if a victim is not in place, wait
+                            vic_name = "victim_" + drop_order
+                            coll_vic = state[{'name': vic_name}]
+                            if coll_vic['location'] != v['location']:
+                                print("Waiting for victim")
+                                self._waiting = True
+                                break
+                            else:
+                                print("Dropping victim")
+                                self._waiting = False
+                                self._last_vic = coll_vic['name'][7:]
+
+                # otherwise, drop the victim
+                if not self._waiting:
+                    self._phase = Phase.DROP_VICTIM
+
 
             if Phase.DROP_VICTIM == self._phase:
                 # Identify the next target victim to rescue
+                self._last_vic = self._goal_vic['order']
                 self._phase = Phase.FIND_NEXT_GOAL
                 self._tick = state['World']['nr_ticks']
                 self._carrying = False
