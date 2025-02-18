@@ -68,7 +68,7 @@ def add_drop_off_zones(builder, task_type):
 
 
 # Add the agents to the world
-def add_agents(builder, condition, task_type, name, folder):
+def add_agents(builder, condition, task_type, name, folder, victims):
 
     for team in range(nr_teams):
         team_name = f"Team {team}"
@@ -76,7 +76,7 @@ def add_agents(builder, condition, task_type, name, folder):
         nr_agents = agents_per_team - human_agents_per_team
         for agent_nr in range(nr_agents):
             if task_type=="mission_1":
-                brain = BaselineAgent(slowdown=8, condition=condition, name=name, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+                brain = BaselineAgent(slowdown=8, condition=condition, name=name, my_areas=["A1","A2","B1","B2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
                 loc = (20,20)
             builder.add_agent(loc, brain, team=team_name, name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
@@ -93,6 +93,11 @@ def create_builder(task_type, condition, name, folder):
     np.random.seed(random_seed)
     # Create the collection goal
     goal = CollectionGoal(max_nr_ticks=np.inf)
+    n_victims = victims_per_area * nr_areas
+    victims = [{} for _ in range(n_victims)]
+    drop_width = 6
+    drop_height = 6
+
     # Create the world builder
     if task_type=="mission_1":
         builder = WorldBuilder(shape=[40,40], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
@@ -107,30 +112,50 @@ def create_builder(task_type, condition, name, folder):
                  "C1": {"top_left": (14,27), "width": 12, "height": 5, "color": pick_up_area_1_color}, "C2": {"top_left": (14,33), "width": 12, "height": 5, "color": pick_up_area_2_color},
                  "D1": {"top_left": (8,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "D2": {"top_left": (2,14), "width": 5, "height": 12, "color": pick_up_area_2_color}}
 
-        images_victims = list(range(1,victims_per_area * nr_areas + 1))
-        random.shuffle(images_victims)
+        total_victims = victims_per_area * nr_areas
+        order_victims = list(range(1,total_victims + 1))
+        random.shuffle(order_victims)
 
         v1 = 0
+
         # Add the areas
         for area_name, area_data in areas.items():
             builder.add_area(area_data["top_left"], width=area_data["width"], height=area_data["height"], name=area_name, visualize_opacity=0.5, visualize_colour=area_data["color"], is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
-            # Add the victims
+            # Pick x and y locations for victims in an area
             loc_victim_x = random.sample(range(area_data["top_left"][0], area_data["top_left"][0] + area_data["width"]), victims_per_area)
             loc_victim_y = random.sample(range(area_data["top_left"][1], area_data["top_left"][1] + area_data["height"]), victims_per_area)
 
 
             for v2 in range(victims_per_area):
-                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(area_name)+"_"+str(images_victims[v1]), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(images_victims[v1])+".png")
-                #builder.add_object(location=(loc_victim_x[v],loc_victim_y[v]),name="victim_"+str(area_name)+"_"+str(v), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/victim_"+str(images_victims[v])+".png")
+                victim = order_victims[v1]
+                print(victim)
+                drop_x = 17 + ((order_victims[v1]-1) % drop_width)
+                drop_y = 17 + ((order_victims[v1]-1) // drop_width)
+                print(drop_x, drop_y)
+                victims[order_victims[v1] - 1] = {"location": (loc_victim_x[v2],loc_victim_y[v2]), "name": "victim_"+str(area_name)+"_"+str(order_victims[v1]), "area": area_name, "order": order_victims[v1], "drop_location": (drop_x, drop_y)}
+                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(area_name)+"_"+str(order_victims[v1]), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png")
+
+                builder.add_object((drop_x,drop_y), "drop_off_"+str(order_victims[v1]), callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png", drop_zone_nr=1)
+               
                 v1 += 1
 
 
-
         # Add the drop off zones
-        builder.add_area((17,17), width=6, height=6, name="Drop off", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=1, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
+
+        builder.add_area((17,17), width=drop_width, height=drop_height, name="Drop off", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=1, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
+
+        # Add the drop off victim spots
+        #v3 = 0
+        #for v3 in range(total_victims):
+        #    vx = 17 + (v3 % drop_width)
+        #    vy = 17 + (v3 // drop_width)
+        #    builder.add_object((vx,vy), "drop_off_"+str(v3 + 1), callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(v3 + 1)+".png", drop_zone_nr=1)
 
 
+        builder.add_object((23,15),'heli',EnvObject,is_traversable=False,is_movable=False,visualize_shape='img',img_name="/images/helicopter.svg", visualize_size=4) 
+        builder.add_object((15,23),'ambulance',EnvObject,is_traversable=False,is_movable=False,visualize_shape='img',img_name="/images/ambulance.svg", visualize_size=3) 
+    
         #builder.add_object((14,16),'dog D1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg", area="A1")
         #builder.add_object((16,16),'dog D2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
         #builder.add_object((16,14),'dog D3', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured dog.svg")
@@ -154,11 +179,7 @@ def create_builder(task_type, condition, name, folder):
   
 
 
-
-    #add_drop_off_zones(builder, task_type)
-
-
-    add_agents(builder, condition, task_type, name, folder)
+    add_agents(builder, condition, task_type, name, folder, victims)
 
     return builder
 
