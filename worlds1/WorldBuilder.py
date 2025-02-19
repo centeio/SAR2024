@@ -69,21 +69,26 @@ def add_drop_off_zones(builder, task_type):
 
 # Add the agents to the world
 def add_agents(builder, condition, task_type, name, folder, victims):
+    print("name add agents", name)
 
     for team in range(nr_teams):
         team_name = f"Team {team}"
         # Add the artificial agents based on condition
         nr_agents = agents_per_team - human_agents_per_team
-        for agent_nr in range(nr_agents):
-            if task_type=="mission_1":
-                brain = BaselineAgent(slowdown=2, condition=condition, name=name, my_areas=["A1","A2","B1","B2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
-                loc = (20,20)
-            builder.add_agent(loc, brain, team=team_name, name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
+        if task_type=="mission_1":
+            brain1 = BaselineAgent(slowdown=1, condition=condition, human_name=name,agent_name="RescueBot", my_areas=["C1","C2","D1","D2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+            loc = (20,20)
+            builder.add_agent(loc, brain1, team=team_name, name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
+
+            brain2 = BaselineAgent(slowdown=1, condition=condition, human_name=name,agent_name="Helper", my_areas=["A1","A2","B1","B2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+            loc = (21,21)
+            builder.add_agent(loc, brain2, team=team_name, name="Helper", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
+
 
         # Add human agents based on condition, do not change human brain values
         for human_agent_nr in range(human_agents_per_team):
             brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, strength=condition, name=name)
-            loc = (19,20)
+            loc = (18,22)
             builder.add_human_agent(location=loc, agent_brain=brain, team=team_name, name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
 # Create the world
@@ -133,10 +138,10 @@ def create_builder(task_type, condition, name, folder):
                 drop_x = 17 + ((order_victims[v1]-1) % drop_width)
                 drop_y = 17 + ((order_victims[v1]-1) // drop_width)
                 print(drop_x, drop_y)
-                victims[order_victims[v1] - 1] = {"location": (loc_victim_x[v2],loc_victim_y[v2]), "name": "victim_"+str(order_victims[v1]), "area": area_name, "order": order_victims[v1], "drop_location": (drop_x, drop_y)}
-                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(order_victims[v1]), callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png")
+                victims[order_victims[v1] - 1] = {"location": (loc_victim_x[v2],loc_victim_y[v2]), "name": "victim_"+str(order_victims[v1])+"_", "area": area_name, "order": order_victims[v1], "drop_location": (drop_x, drop_y)}
+                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(order_victims[v1])+"_", callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png")
 
-                builder.add_object((drop_x,drop_y), "drop_off_"+str(order_victims[v1]), callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png", drop_zone_nr=1)
+                builder.add_object((drop_x,drop_y), "drop_off_"+str(order_victims[v1])+"_", callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png", drop_zone_nr=1)
                
                 v1 += 1
 

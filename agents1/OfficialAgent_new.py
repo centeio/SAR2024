@@ -39,13 +39,14 @@ class Phase(enum.Enum):
 
 
 class BaselineAgent(ArtificialBrain):
-    def __init__(self, slowdown, condition, name, my_areas, victim_order, folder):
-        super().__init__(slowdown, condition, name, folder)
+    def __init__(self, slowdown, condition, agent_name, human_name, my_areas, victim_order, folder):
+        super().__init__(slowdown, condition, agent_name, folder)
         # Initialization of some relevant variables
         self._tick = None
         self._slowdown = slowdown
         self._condition = condition
-        self._human_name = name
+        self._human_name = human_name
+        self._agent_name = agent_name
         self._folder = folder
         self._my_areas = my_areas
         self._ordered_victims = victim_order
@@ -154,6 +155,7 @@ class BaselineAgent(ArtificialBrain):
                 self._navigator.add_waypoints([self._goal_vic['location']])
                 # Follow the path to the found victim
                 self._phase = Phase.FOLLOW_PATH_TO_VICTIM
+                return None, {}
 
             if Phase.FOLLOW_PATH_TO_VICTIM == self._phase:
                 # Start searching for other victims if the human already rescued the target victim
@@ -170,6 +172,7 @@ class BaselineAgent(ArtificialBrain):
                 if action is not None:
                     return action, {}
                 self._phase = Phase.TAKE_VICTIM
+                return None, {}
 
             if Phase.TAKE_VICTIM == self._phase:
 
@@ -190,6 +193,8 @@ class BaselineAgent(ArtificialBrain):
                         self._carrying = True
                         return CarryObject.__name__, {'object_id': self._goal_vic['name'], 'human_name': self._human_name}
                 
+                return None, {}
+                
             if Phase.PLAN_PATH_TO_DROPPOINT == self._phase:
                 print("PLAN_PATH_TO_DROPPOINT", self._goal_vic['drop_location'])
                 self._navigator.reset_full()
@@ -198,51 +203,63 @@ class BaselineAgent(ArtificialBrain):
                 # Follow the path to the drop zone
                 self._phase = Phase.FOLLOW_PATH_TO_DROPPOINT
 
+                return None, {}
+
             if Phase.FOLLOW_PATH_TO_DROPPOINT == self._phase:
                 print("FOLLOW_PATH_TO_DROPPOINT")
                 # Communicate that the agent is transporting a mildly injured victim alone to the drop zone
                 self._state_tracker.update(state)
                 # Follow the path to the drop zone
                 action = self._navigator.get_move_action(self._state_tracker)
+                print("action", action)
                 if action is not None:
                     return action, {}
                 
-                # check if the agent can drop the victim
+                self._phase = Phase.DROP_VICTIM
+
+                return None, {}
+
+
+            if Phase.DROP_VICTIM == self._phase:
+               # check if the agent can drop the victim
                 # i.e. check if all previous victims are in place
                 goal_victims = state[{'is_goal_block': True}]
 
                 #print(goal_victims)
                 
                 for v in goal_victims:
-                    drop_order = v['name'][9:]
-                    print(drop_order, self._last_vic, self._goal_vic['order'])
+                    length = len(v['name'])
+                    drop_order = v['name'][9:length-1]
+                    #print(drop_order, self._last_vic, self._goal_vic['order'])
                     if int(drop_order) < self._goal_vic['order']:
-                        if int(drop_order) > self._last_vic:
+                        if int(drop_order) > int(self._last_vic):
                             # if a victim is not in place, wait
-                            vic_name = "victim_" + drop_order
+                            vic_name = "victim_" + drop_order + "_"
                             coll_vic = state[{'name': vic_name}]
-                            if coll_vic['location'] != v['location']:
+                            #print("agent name", self._agent_name)
+                            #print("col vic", coll_vic)
+                            #print("vic", v)
+                            if coll_vic is None or coll_vic['location'] != v['location']:
                                 print("Waiting for victim")
                                 self._waiting = True
-                                break
+                                return None, {}
                             else:
                                 print("Dropping victim")
                                 self._waiting = False
-                                self._last_vic = coll_vic['name'][7:]
+                                length2 = len(coll_vic['name'])
+                                self._last_vic = coll_vic['name'][7:length2-1]
 
                 # otherwise, drop the victim
                 if not self._waiting:
-                    self._phase = Phase.DROP_VICTIM
-
-
-            if Phase.DROP_VICTIM == self._phase:
-                # Identify the next target victim to rescue
-                self._last_vic = self._goal_vic['order']
-                self._phase = Phase.FIND_NEXT_GOAL
-                self._tick = state['World']['nr_ticks']
-                self._carrying = False
-                # Drop the victim on the correct location on the drop zone
-                return Drop.__name__, {'human_name': self._human_name}
+                    # Identify the next target victim to rescue
+                    self._last_vic = self._goal_vic['order']
+                    self._phase = Phase.FIND_NEXT_GOAL
+                    self._tick = state['World']['nr_ticks']
+                    self._carrying = False
+                    # Drop the victim on the correct location on the drop zone
+                    return Drop.__name__, {'human_name': self._human_name}
+                
+                return None, {}
 
     def _get_drop_zones(self, state):
         '''
