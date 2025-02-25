@@ -48,7 +48,7 @@ background_color = "#C2A9A1"
 background_image = "./images/background.png"
 pick_up_area_1_color = "#4b6473"
 pick_up_area_2_color = "#EDC001"
-drop_off_color = "#009900"
+drop_off_color = "#023020"
 object_size = 0.9
 victims_per_area = 2
 nr_teams = 1
@@ -64,12 +64,11 @@ def add_drop_off_zones(builder, task_type):
     if task_type == "mission_1":
         nr_drop_zones = 1
         for nr_zone in range(nr_drop_zones):
-            builder.add_area((16,9), width=3, height=2, name=f"Drop off {nr_zone}", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=nr_zone, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
+            builder.add_area((16,9), width=3, height=2, name=f"Drop off {nr_zone}", visualize_opacity=0.3, visualize_colour=drop_off_color, drop_zone_nr=nr_zone, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
 
 
 # Add the agents to the world
 def add_agents(builder, condition, task_type, name, folder, victims):
-    print("name add agents", name)
 
     for team in range(nr_teams):
         team_name = f"Team {team}"
@@ -134,14 +133,14 @@ def create_builder(task_type, condition, name, folder):
 
             for v2 in range(victims_per_area):
                 victim = order_victims[v1]
-                print(victim)
+                #print(victim)
                 drop_x = 17 + ((order_victims[v1]-1) % drop_width)
                 drop_y = 17 + ((order_victims[v1]-1) // drop_width)
-                print(drop_x, drop_y)
+                #print(drop_x, drop_y)
                 victims[order_victims[v1] - 1] = {"location": (loc_victim_x[v2],loc_victim_y[v2]), "name": "victim_"+str(order_victims[v1])+"_", "area": area_name, "order": order_victims[v1], "drop_location": (drop_x, drop_y)}
-                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(order_victims[v1])+"_", callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png")
+                builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(order_victims[v1])+"_", callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".svg")
 
-                builder.add_object((drop_x,drop_y), "drop_off_"+str(order_victims[v1])+"_", callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".png", drop_zone_nr=1)
+                builder.add_object((drop_x,drop_y), "drop_off_"+str(order_victims[v1])+"_", callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(order_victims[v1])+".svg", drop_zone_nr=1)
                
                 v1 += 1
 
@@ -226,8 +225,8 @@ class CollectionGoal(WorldGoal):
     def __init__(self, max_nr_ticks):
         super().__init__()
         self.max_nr_ticks = max_nr_ticks
-        self.__drop_off= {}
-        self.__drop_off_zone = {}
+        self.__all_vics = []
+        self.__goal_vics = []
         self.__progress = 0
         self.__score = 0
     
@@ -237,122 +236,73 @@ class CollectionGoal(WorldGoal):
     def goal_reached(self, grid_world):
         if grid_world.current_nr_ticks >= self.max_nr_ticks:
             return True
-        #return self.isVictimPlaced(grid_world)
+        return self.allVictimsPlaced(grid_world)
 
-    def isVictimPlaced(self, grid_world):
+    def allVictimsPlaced(self, grid_world):
         '''
         @return true if all victims have been rescued
         '''
         # find all drop off locations, its tile ID's and goal victims
-        if self.__drop_off =={}:
+        if self.__goal_vics == []:
             self.__find_drop_off_locations(grid_world)
         # Go through each drop zone, and check if the victims are there on the right spot
         is_satisfied, progress = self.__check_completion(grid_world)
         # Progress in percentage
-        self.__progress = progress / sum([len(goal_vics) for goal_vics in self.__drop_off.values()])
+        self.__progress = progress / len(self.__goal_vics)
+        #print("goal vics", self.__drop_off.values())
 
+        #print("Progress", self.__progress, "is_satisfied", is_satisfied)
         return is_satisfied
 
-    def progress(self, grid_world):
-        # find all drop off locations, its tile ID's and goal blocks
-        if self.__drop_off =={}:  
-            self.__find_drop_off_locations(grid_world)
-        # Go through each drop zone, and check if the victims are there in the right spot
-        is_satisfied, progress = self.__check_completion(grid_world)
-        # Progress in percentage
-        self.__progress = progress / sum([len(goal_vics) for goal_vics in self.__drop_off.values()])
-        return self.__progress
-
     def __find_drop_off_locations(self, grid_world):
-        goal_vics = {} 
+        goal_vics = [] 
         all_objs = grid_world.environment_objects
         for obj_id, obj in all_objs.items():  # go through all objects
             if "drop_zone_nr" in obj.properties.keys():  # check if the object is part of a drop zone
-                zone_nr = obj.properties["drop_zone_nr"]  # obtain the zone number
-                if obj.properties["is_goal_block"]:  # check if the object is a ghostly goal victim
-                    if zone_nr in goal_vics.keys():  # create or add to the list
-                        goal_vics[zone_nr].append(obj)
-                    else:
-                        goal_vics[zone_nr] = [obj]
+                if obj.properties["is_goal_block"]:
+                    # check if the object is a ghostly goal victim
+                    #print("obj",obj.properties)
+                    goal_vics += [obj.properties]
+        self.__goal_vics = goal_vics
 
-        self.__drop_off_zone = {}
-        self.__drop_off = {}
-        for zone_nr in goal_vics.keys():  # go through all drop of zones and fill the drop_off dict
-            # Instantiate the zone's dict.
-            self.__drop_off_zone[zone_nr] = {}
-            self.__drop_off[zone_nr] = {}
-            # Obtain the zone's goal victims.
-            vics = goal_vics[zone_nr].copy()
-            # The number of victims is the maximum number of victims to collect for this zone.
-            max_rank = len(vics)
-            # Find the 'bottom' location
-            bottom_loc = (-np.inf, -np.inf)
-            for vic in vics:
-                if vic.location[1] > bottom_loc[1]:
-                    bottom_loc = vic.location
-            # Now loop through victim lists and add them to their appropriate ranks
-            for rank in range(max_rank):
-                loc = (bottom_loc[0], bottom_loc[1]-rank)
-                # find the victim at that location
-                for vic in vics:
-                    if vic.location == loc:
-                        # Add to self.drop_off
-                        self.__drop_off_zone[zone_nr][rank] = [loc, vic.properties['img_name'][8:-4], None]
-                        for i in self.__drop_off_zone.keys():
-                            self.__drop_off[i] = {}
-                            vals = list(self.__drop_off_zone[i].values())
-                            vals.reverse()
-                            for j in range(len(self.__drop_off_zone[i].keys())):
-                                self.__drop_off[i][j] = vals[j]
+    def __update_victims(self, grid_world):
+        vics = [] 
+        all_objs = grid_world.environment_objects
+        for obj_id, obj in all_objs.items():  # go through all objects
+            if "is_collectable" in obj.properties.keys() and obj.properties["is_collectable"]:
+                # check if the object is a ghostly goal victim
+                #print("obj",obj.properties)
+                vics += [obj.properties]
+
+        self.__all_vics = vics
 
     def __check_completion(self, grid_world):
         # Get the current tick number
         curr_tick = grid_world.current_nr_ticks
+        coll_count = 0
         # loop through all zones, check the victims and set the tick if satisfied
-        for zone_nr, goal_vics in self.__drop_off.items():
-            # Go through all ranks of this drop off zone
-            for rank, vic_data in goal_vics.items():
-                loc = vic_data[0]  # the location, needed to find victims here
-                shape = vic_data[1]  # the desired shape
-                tick = vic_data[2]
-
-                # Retrieve all objects, the object ids at the location and obtain all victims from it
-                all_objs = grid_world.environment_objects
-                obj_ids = grid_world.get_objects_in_range(loc, object_type=EnvObject, sense_range=0)
-                vics = [all_objs[obj_id] for obj_id in obj_ids
-                          if obj_id in all_objs.keys() and "is_collectable" in all_objs[obj_id].properties.keys()]
-                vics = [v for v in vics if v.properties["is_collectable"]]
-
-                # Check if there is a victim, and if so if it is the right one and the tick is not yet set, then set the current tick and increase the score.
-                if len(vics) > 0 and vics[0].properties['img_name'][8:-4] == shape and tick is None:
-                    self.__drop_off[zone_nr][rank][2] = curr_tick
-                    if 'critical' in vics[0].properties['img_name'][8:-4]:
-                        self.__score+=6
-                    if 'mild' in vics[0].properties['img_name'][8:-4]:
-                        self.__score+=3
-                # Deduct points from the score when victims are picked up from drop zone
-                elif len(vics) == 0:
-                    if self.__drop_off[zone_nr][rank][2] != None:
-                        self.__drop_off[zone_nr][rank][2] = None
-                        if rank in [0,1,2,3]:
-                            self.__score-=6
-                        if rank in [4,5,6,7]:
-                            self.__score-=3
+        #print("goal vics", self._goal_vics)
+        self.__update_victims(grid_world)
+        for v in self.__goal_vics:
+            #print("Here", v['name'])
+            length = len(v['name'])
+            drop_order = v['name'][9:length-1]
+            #print(drop_order, self._last_vic, self._goal_vic['order'])
+            vic_name = "victim_" + drop_order + "_"
+            for v2 in self.__all_vics:
+                #print("names", v2['name'], vic_name)
+                if v2['name'] == vic_name:
+                    #print("location", v2['location'], v['location'])
+                    if v2['location'] == v['location']:
+                        coll_count += 1
+                        break
 
         # Now check if all victims are collected
-        is_satisfied = True
-        progress = 0
-        for zone_nr, goal_vics in self.__drop_off.items():
-            zone_satisfied = True
-            ticks = [goal_vics[r][2] for r in range(len(goal_vics))]  # list of ticks in rank order
-            for tick in ticks:
-                if tick is not None:
-                    progress += 1
-            if None in ticks:
-                zone_satisfied = False
-            # update our satisfied boolean
-            is_satisfied = is_satisfied and zone_satisfied
-        agent = grid_world.registered_agents['rescuebot']
-        agent.change_property('score',self.__score)
+        if coll_count == len(self.__goal_vics):
+            is_satisfied = True
+        else:
+            is_satisfied = False
+        
+        progress = coll_count
 
         return is_satisfied, progress

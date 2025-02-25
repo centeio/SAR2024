@@ -20,22 +20,12 @@ class Phase(enum.Enum):
     INTRO = 1,
     FIND_NEXT_GOAL = 2,
     PICK_UNSEARCHED_ROOM = 3,
-    PLAN_PATH_TO_ROOM = 4,
-    FOLLOW_PATH_TO_ROOM = 5,
-    PLAN_ROOM_SEARCH_PATH = 6,
-    FOLLOW_ROOM_SEARCH_PATH = 7,
-    PLAN_PATH_TO_VICTIM = 8,
-    FOLLOW_PATH_TO_VICTIM = 9,
-    TAKE_VICTIM = 10,
-    PLAN_PATH_TO_DROPPOINT = 11,
-    FOLLOW_PATH_TO_DROPPOINT = 12,
-    DROP_VICTIM = 13,
-    WAIT_FOR_HUMAN = 14,
-    WAIT_AT_ZONE = 15,
-    FIX_ORDER_GRAB = 16,
-    FIX_ORDER_DROP = 17,
-    REMOVE_OBSTACLE_IF_NEEDED = 18,
-    ENTER_ROOM = 19
+    PLAN_PATH_TO_VICTIM = 4,
+    FOLLOW_PATH_TO_VICTIM = 5,
+    TAKE_VICTIM = 6,
+    PLAN_PATH_TO_DROPPOINT = 7,
+    FOLLOW_PATH_TO_DROPPOINT = 8,
+    DROP_VICTIM = 9 
 
 
 class BaselineAgent(ArtificialBrain):
@@ -147,6 +137,8 @@ class BaselineAgent(ArtificialBrain):
                             # TODO then drop victim
                             # TODO else wait for another agent to drop victim
                         # TODO acknowledge rescue and move on to next victim
+                
+                return None, {}
 
             if Phase.PLAN_PATH_TO_VICTIM == self._phase:
                 # Plan the path to a found victim using its location
