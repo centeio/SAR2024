@@ -84,7 +84,7 @@ html {
   padding-bottom: 0.1em;
   padding-left: 1em;
   /* position: sticky; */
-  z-index: 100000000000;
+  z-index: 100000;
 }
 
 .row {
@@ -213,7 +213,7 @@ h5 {
   padding-bottom: 1em;
   padding-left: 0.5em;
   padding-right: 0;
-  z-index: 100000000000;
+  z-index: 100000;
   position: absolute;
   top: 46px;
   right: 0;

@@ -3,15 +3,17 @@ import sys
 import csv
 import glob
 import pathlib
+import threading
 from SaR_gui import visualization_server
 from worlds1.WorldBuilder import create_builder
 from pathlib import Path
 from loggers.OutputLogger import output_logger
 from queue import Queue
-
-
+import table_api
 
 if __name__ == "__main__":
+    print("communication triggered", table_api.communication_triggered)
+    table_api.communication_triggered = False # TURN ON for table to appear in the beginning - to fix later and move to the end of tutorial
     fld = os.getcwd()
     #print("\nEnter one of the task types 'tutorial' or 'official':")
     #choice1=input()
@@ -30,7 +32,14 @@ if __name__ == "__main__":
     vis_thread = visualization_server.run_matrx_visualizer(verbose=False, media_folder=media_folder)
     world = builder.get_world()
     print("Started world...")
-    builder.api_info['matrx_paused'] = False
+    print(str(visualization_server.port))
+    builder.api_info['matrx_paused'] = True
+
+    # Run Flask server in a separate thread
+    flask_thread = threading.Thread(target=table_api.run_table_flask)
+    flask_thread.start()
+
+
     world.run(builder.api_info)
     print("DONE!")
     print("Shutting down custom visualizer")

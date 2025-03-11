@@ -15,6 +15,7 @@ var start_button = document.getElementById("start_button"),
     pause_button = document.getElementById("pause_button"),
     stop_button = document.getElementById("stop_button");
 
+
 /**
  * Synchronizes the play/pause button with the current value of MATRX
  */

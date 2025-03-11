@@ -20,6 +20,7 @@ from actions1.CustomActions import RemoveObjectTogether
 from brains1.HumanBrain import HumanBrain
 from loggers.ActionLogger import ActionLoggerV2
 from datetime import datetime
+import requests
 import random
 
 random_seed = 1
@@ -306,3 +307,20 @@ class CollectionGoal(WorldGoal):
         progress = coll_count
 
         return is_satisfied, progress
+    
+
+def trigger_table():
+    generate_table_html()
+    generate_table_json()
+
+    try:
+        requests.get('http://localhost:5001/trigger_communication')
+    except Exception as e:
+        print(f"Failed to send communication trigger: {e}")
+
+def generate_table_html():
+    # make interactive table with listed tasks
+    return
+
+def generate_table_json():
+    return
