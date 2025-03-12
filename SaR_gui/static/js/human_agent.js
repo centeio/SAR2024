@@ -42,9 +42,23 @@ function select_agent(e) {
 close_table_btn.addEventListener("click", close_table, false);
 
 function close_table() {
-  fetch('http://localhost:5001/update_preferences', {
+    const table = document.getElementById("preferencesTable");
+    const dropdowns = table.querySelectorAll("select");
+
+    let preferences = [];
+    dropdowns.forEach(dropdown => {
+        let row = dropdown.closest("tr");
+        let rowId = row.getAttribute("data-id"); // Assuming each row has a unique identifier
+        let selectedValue = dropdown.value;
+        
+        preferences.push({ id: rowId, preference: selectedValue });
+    });
+    fetch('http://localhost:5001/update_preferences', {
         method: 'POST',
-        body: JSON.stringify({ test_value: "example" })
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(preferences)
     })
     .then(response => response.json())
     .then(data => {
@@ -53,7 +67,7 @@ function close_table() {
             console.log("preferences updated")
             toggle_start(); // Start or resume the game when the overlay is hidden
         } else {
-            console.error('Failed to clear trust impact list:', data.reason);
+            console.error('Failed to update preferences:', data.reason);
         }
     })
     .catch(error => console.error('Error sending clear signal:', error));

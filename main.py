@@ -13,7 +13,7 @@ import table_api
 
 if __name__ == "__main__":
     print("communication triggered", table_api.communication_triggered)
-    table_api.communication_triggered = False # TURN ON for table to appear in the beginning - to fix later and move to the end of tutorial
+    table_api.communication_triggered = True # TURN ON for table to appear in the beginning - to fix later and move to the end of tutorial
     fld = os.getcwd()
     #print("\nEnter one of the task types 'tutorial' or 'official':")
     #choice1=input()
