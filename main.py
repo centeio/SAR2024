@@ -13,16 +13,19 @@ import table_api
 
 if __name__ == "__main__":
     print("communication triggered", table_api.communication_triggered)
-    table_api.communication_triggered = True # TURN ON for table to appear in the beginning - to fix later and move to the end of tutorial
+    table_api.communication_triggered = False # TURN True for table to appear in the beginning - to fix later and move to the end of tutorial
     fld = os.getcwd()
     #print("\nEnter one of the task types 'tutorial' or 'official':")
     #choice1=input()
     #print("\nEnter a name or id for the human agent:")
     #choice2=input()
     #if choice1=='mission':
-    choice1 = "mission"
-    choice2 = "mission"
-    builder = create_builder(task_type='mission_1',condition='mission', name='caro', folder=fld)
+    task_type = "mission"
+    condition = "mission"
+    name = "caro"
+    participant_id = 0
+
+    builder = create_builder(task_type='mission',condition='mission', name=name, participant_id = participant_id, folder=fld)
 
 
     # Start overarching MATRX scripts and threads, such as the api and/or visualizer if requested. Here we also link our own media resource folder with MATRX.
@@ -45,7 +48,7 @@ if __name__ == "__main__":
     print("Shutting down custom visualizer")
     r = requests.post("http://localhost:" + str(visualization_server.port) + "/shutdown_visualizer")
     vis_thread.join(timeout=5)
-    if choice1=="official":
+    #if task_type=="mission":
         # Generate one final output log file for the official task type
-        output_logger(fld)
+    #    output_logger(fld)
     builder.stop()

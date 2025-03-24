@@ -118,25 +118,16 @@ class BaselineAgent(ArtificialBrain):
                 self._goal_vic = None
                 self._moving = True
 
-
-
-                # TODO check following victim within agent's areas to be rescued
+                # check following victim within agent's areas to be rescued
                 for vic in self._ordered_victims[self._last_vic:]:
                     if vic['area'] in self._my_areas:
-                    # TODO check if victim still at location
+                    #  check if victim still at location
                         # state.get_with_property()?
-                        # TODO then go to location
+                        #  then go to location
                         self._goal_vic = vic
 
                         self._phase = Phase.PLAN_PATH_TO_VICTIM
                         return Idle.__name__, {'action_duration': 10}
-
-                        # TODO pick up victim
-                        # TODO go to drop zone
-                        # TODO check if all victims before are rescued
-                            # TODO then drop victim
-                            # TODO else wait for another agent to drop victim
-                        # TODO acknowledge rescue and move on to next victim
                 
                 return None, {}
 

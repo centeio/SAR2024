@@ -4,6 +4,8 @@
 
 var close_table_btn = document.getElementById("close_table_btn");
 
+const beep_sound = new Audio("https://www.soundjay.com/buttons/sounds/beep-08b.mp3");
+
 
 $(document).ready(function() {
     // bind key listener
@@ -98,7 +100,7 @@ function checkCommunication() {
     fetch('http://localhost:5001/check_communication')
         .then(response => response.json())
         .then(data => {
-            console.log("show communication")
+            console.log("show communication?")
             console.log(data.show_communication)
             if (data.show_communication) {
               showCommunication();
@@ -107,4 +109,23 @@ function checkCommunication() {
         .catch(error => console.error('Error checking communication:', error));
 }
 
+function playBeep() {
+    beep_sound.play()
+}
+
+function checkBeep() {
+    fetch('http://localhost:5001/check_beep')
+        .then(response => response.json())
+        .then(data => {
+            console.log("play beep?")
+            console.log(data.play_beep)
+            if (data.play_beep) {
+                playBeep();
+            }
+        })
+        .catch(error => console.error('Error checking beep:', error));    
+
+}
+
 setInterval(checkCommunication, 1000);
+setInterval(checkBeep, 1000);

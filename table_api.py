@@ -7,7 +7,13 @@ app = Flask(__name__, static_folder='static')
 CORS(app)
 
 communication_triggered = True
+beep_triggered = False
 PREFERENCES_CSV = "preferences.csv"
+
+def update_beep(beep_value):
+    global beep_triggered
+    print("BEEEEP", beep_value)
+    beep_triggered = beep_value
 
 # Ensure CSV file has headers
 with open(PREFERENCES_CSV, mode='w', newline='') as file:
@@ -35,6 +41,16 @@ def check_communication():
         return jsonify({"show_communication": True}), 200
     else:
         return jsonify({"show_communication": False}), 200
+
+@app.route('/check_beep', methods=['GET'])
+def check_beep():
+    global beep_triggered
+    print("check beep", beep_triggered)
+    if beep_triggered:
+        return jsonify({"play_beep": True}), 200
+    else:
+        return jsonify({"play_beep": False}), 200   
+
     
 @app.route('/update_preferences', methods=['POST'])
 def update_preferences():
@@ -67,18 +83,6 @@ def update_preferences():
         return jsonify({"status": "updated"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route('/update_status', methods=['POST'])
-def update_status():
-    global status_data
-    data = request.get_json()
-    status_data["collected_victims"] = data.get("collected_victims", [])
-    status_data["searched_rooms"] = data.get("searched_rooms_robot", [])
-    status_data["searched_rooms_human"] = data.get("searched_rooms_human", [])
-    status_data["trust_impact_list"] = data.get("trust_impact_list", [])
-    status_data["trust_per_task"] = data.get("trust_per_task", {})
-    status_data["confidence_per_task"] = data.get("confidence_per_task", {})
-    return jsonify({"status": "updated"}), 200
 
 @app.route('/update_time', methods=['POST'])
 def update_time():

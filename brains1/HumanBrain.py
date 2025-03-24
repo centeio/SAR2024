@@ -9,11 +9,12 @@ from matrx.agents import HumanAgentBrain
 from matrx.messages import Message
 from matrx.actions.move_actions import MoveNorth, MoveNorthEast, MoveEast, MoveSouthEast, MoveSouth, MoveSouthWest, MoveWest, MoveNorthWest
 from actions1.CustomActions import RemoveObjectTogether, Idle, CarryObject, CarryObjectTogether, DropObjectTogether, Drop, RemoveObject
+from table_api import update_beep
 
 class HumanBrain(HumanAgentBrain):
     """ Creates an Human Agent which is an agent that can be controlled by a human.
     """
-    def __init__(self, memorize_for_ticks=None, fov_occlusion=False, max_carry_objects=3, grab_range=1, drop_range=1, door_range=1, remove_range=1, strength='normal', name='human'):
+    def __init__(self, memorize_for_ticks=None, fov_occlusion=False, max_carry_objects=1, grab_range=1, drop_range=1, door_range=1, remove_range=1, strength='normal', name='human'):
         super().__init__(memorize_for_ticks=memorize_for_ticks)
         self.__fov_occlusion = fov_occlusion
         if fov_occlusion:
@@ -27,6 +28,7 @@ class HumanBrain(HumanAgentBrain):
         self.__remove_range = remove_range
         self.__strength = strength
         self.__name = name
+        self.water_locs = None
 
     def _factory_initialise(self, agent_name, agent_id, action_set,
                             sense_capability, agent_properties, rnd_seed,
@@ -217,6 +219,7 @@ class HumanBrain(HumanAgentBrain):
         """
         action = None
         action_kwargs = {}
+        global beep_triggered
 
         # if no keys were pressed, do nothing
         if user_input is None or user_input == []:
@@ -311,41 +314,24 @@ class HumanBrain(HumanAgentBrain):
                 action_kwargs['object_id'] = obj_id
                 action_kwargs['action_duration'] = 200
 
-        # if the user chose to do an open or close door action, find a door to
-        # open/close within range
-        elif action == OpenDoorAction.__name__ \
-                or action == CloseDoorAction.__name__:
-            action_kwargs['door_range'] = self.__door_range
-            action_kwargs['object_id'] = None
 
-            # Get all doors from the perceived objects
-            objects = list(state.keys())
-            doors = [obj for obj in objects if 'is_open' in state[obj]]
-
-            # get all doors within range
-            doors_in_range = []
-            for object_id in doors:
-                # Select range as just enough to grab that object
-                dist = int(np.ceil(np.linalg.norm(
-                    np.array(state[object_id]['location']) - np.array(
-                        state[self.agent_id]['location']))))
-                if dist <= action_kwargs['door_range']:
-                    doors_in_range.append(object_id)
-
-            # choose a random door within range
-            if len(doors_in_range) > 0:
-                action_kwargs['object_id'] = \
-                    self.rnd_gen.choice(doors_in_range)
 
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:
-            water_locs = []
-            if state[{"name": "water"}]:
-                for water in state[{"name": "water"}]:
-                    if water['location'] not in water_locs:
-                        water_locs.append(water['location'])
-            if state[{"name": self.__name}]['location'] in water_locs and state[{"name": self.__name}]['location'] not in [(3,5),(9,5),(15,5),(21,5),(3,6),(9,6),(15,6),(3,17),(9,17),(15,17),(3,18),(9,18),(15,18),(21,18)]:
+            if self.water_locs == None: # TODO remove this line if error comes up
+                water_locs = []
+                if state[{"name": "water"}]:
+                    for water in state[{"name": "water"}]:
+                        if water['location'] not in water_locs:
+                            water_locs.append(water['location'])
+                self.water_locs = water_locs
+                            
+            if state[{"name": self.__name}]['location'] in self.water_locs and state[{"name": self.__name}]['location']:
                 action == Idle.__name__
+                update_beep(True)
                 action_kwargs['action_duration'] = 5
+            else:
+                update_beep(False)
+
 
         return action, action_kwargs
 
