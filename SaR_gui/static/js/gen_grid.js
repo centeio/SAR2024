@@ -30,7 +30,6 @@ var firstDraw = true,
     navbar = null,
     animation_duration_s = null, // is calculated based on animation_duration_perc and tps.
     populate_god_agent_menu = null, // keep track of any new agents
-    pop_new_chat_dropdown = null,
     latest_tick_processed = null,
     redraw_required = false; // for instance when the window has been resized
 
@@ -58,14 +57,11 @@ function initialize_grid() {
  * Generate the grid and all its objects
  * @param state: the MATRX state
  * @param world_settings: the MATRX World object, containing all settings of the current MATRX World
- * @param new_messages: object with for every chatroom (ID), the new messages
- * @param accessible_chatrooms: object with for every chatroom (ID), another object with the "name" and "type".
  * @param new_tick: whether this is the first draw after a new tick/update
  */
-function draw(state, world_settings, new_messages, accessible_chatrooms, new_tick) {
+function draw(state, world_settings, new_tick) {
     // whether to (re)populate the dropdown menu with links to all agents
     populate_god_agent_menu = false;
-    pop_new_chat_dropdown = false;
 
     // parse the new word settings, and change the grid, background, and tiles based on any changes
     // in the settings
@@ -75,9 +71,6 @@ function draw(state, world_settings, new_messages, accessible_chatrooms, new_tic
     if (latest_tick_processed == current_tick && !redraw_required) {
         return;
     }
-
-    // process any messages received
-    process_messages(new_messages, accessible_chatrooms);
 
     // move the objects from last tick to another list
     saved_prev_objs = saved_objs;
@@ -154,7 +147,6 @@ function draw(state, world_settings, new_messages, accessible_chatrooms, new_tic
 
                 console.log("adding selection listener:", objID);
                 populate_god_agent_menu = true;
-                pop_new_chat_dropdown = true;
 
                 // add a click listener for the selection
                 add_selection_listener(obj_element);
@@ -232,10 +224,6 @@ function draw(state, world_settings, new_messages, accessible_chatrooms, new_tic
         populate_agent_menu(state);
     }
 
-    // update the list with accessible chatrooms
-    if (pop_new_chat_dropdown) {
-        populate_new_chat_dropdown(accessible_chatrooms);
-    }
 
     // mark this tick as processed (in the case the user paused MATRX)
     latest_tick_processed = current_tick;
@@ -335,12 +323,6 @@ function parse_world_settings(world_settings) {
     // reset some things if we are visualizing a new world
     if (world_ID != world_settings['world_ID']) {
         // if it is not the first load of a world, but a genuine transition to a new world, reset
-        // the chat
-        if (world_ID != null) {
-            reset_chat();
-        }
-        populate_god_agent_menu = true;
-        pop_new_chat_dropdown = true;
 
         // add MATRX version to screen on the bottom right
         $("body").append(`<div class="matrx_core_version">MATRX Core version: ${lv_matrx_version}</div>`)

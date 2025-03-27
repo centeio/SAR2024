@@ -106,7 +106,7 @@ def build_tutorial(name, participant_id, folder, victims_per_area, areas):
 
     return builder
 
-def build_mission(name, participant_id, condition, folder, victims_per_area, areas):
+def build_mission(name, condition, participant_id, agent_type, folder, victims_per_area, areas):
     goal = CollectionGoal(max_nr_ticks=np.inf)
 
     builder = WorldBuilder(shape=[40,40], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
@@ -118,7 +118,7 @@ def build_mission(name, participant_id, condition, folder, victims_per_area, are
     loc = (18,22)
     builder.add_human_agent(location=loc, agent_brain=brain, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
-    brain1 = BaselineAgent(slowdown=1, condition=condition, human_name=name,agent_name="RescueBot", my_areas=["C1","C2","D1","D2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+    brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=[], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
     loc = (20,20)
     builder.add_agent(loc, brain1, team="Team", name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
@@ -191,7 +191,7 @@ def build_sar_env(builder):
 
 
 # Create the world
-def create_builder(task_type, condition, name, participant_id, folder):
+def create_builder(condition, agent_type, name, participant_id, folder):
     random.seed(random_seed)
     # Set numpy's random generator
     np.random.seed(random_seed)
@@ -203,14 +203,14 @@ def create_builder(task_type, condition, name, participant_id, folder):
                 "D1": {"top_left": (8,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "D2": {"top_left": (2,14), "width": 5, "height": 12, "color": pick_up_area_2_color}}
 
 
-    if task_type=="tutorial":
+    if condition=="tutorial":
         builder = build_tutorial(name, participant_id, folder, victims_per_area_tutorial, areas)
 
     # Create the world builder
-    if task_type=="mission":
-        builder = build_mission(name, participant_id, condition, folder, victims_per_area_mission, areas)
+    if condition=="mission_nocomm" or condition=="mission_comm":
+        builder = build_mission(name=name, condition=condition, participant_id=participant_id, agent_type=agent_type, folder=folder, victims_per_area=victims_per_area_mission, areas=areas)
 
- 
+
     return builder
 
 class CollectableBlock(EnvObject):

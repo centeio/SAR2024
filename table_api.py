@@ -6,9 +6,12 @@ import csv
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-communication_triggered = True
-beep_triggered = False
+pref_table_triggered = False
+alloc_comm_table_triggered = False
+alloc_nocomm_table_triggered = False
 PREFERENCES_CSV = "preferences.csv"
+
+beep_triggered = False
 
 def update_beep(beep_value):
     global beep_triggered
@@ -35,12 +38,11 @@ def trigger_communication():
 
 @app.route('/check_communication', methods=['GET'])
 def check_communication():
-    global communication_triggered
-    print("check comm", communication_triggered)
-    if communication_triggered:
-        return jsonify({"show_communication": True}), 200
-    else:
-        return jsonify({"show_communication": False}), 200
+    global pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered
+    print("check comm", pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered)
+    return jsonify({"show_pref_table": pref_table_triggered,
+                    "show_alloc_comm": alloc_comm_table_triggered,
+                    "show_alloc_nocomm": alloc_nocomm_table_triggered}), 200
 
 @app.route('/check_beep', methods=['GET'])
 def check_beep():
@@ -56,7 +58,7 @@ def check_beep():
 def update_preferences():
     try:
         print("here update preferences")
-        global communication_triggered
+        global pref_table_triggered
         data = request.get_json(force=True)
         if not isinstance(data, list):
             return jsonify({"error": "Invalid data format, expected a list"}), 400
@@ -79,10 +81,34 @@ def update_preferences():
                 print("endline",row_id, preference, preference_num)
             print("end file")
 
-        communication_triggered = False
+        pref_table_triggered = False
         return jsonify({"status": "updated"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/update_allocation_nocomm', methods=['POST'])
+def update_allocation_nocomm():
+    try:
+        global alloc_nocomm_table_triggered
+        data = request.get_json(force=True)
+        # TODO actually update tasks
+        print(data)
+        alloc_nocomm_table_triggered = False
+        return jsonify({"status": "updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/update_allocation_comm', methods=['POST'])
+def update_allocation_comm():
+    try:
+        data = request.get_json(force=True)
+        global alloc_comm_table_triggered
+        # TODO actually update tasks
+        alloc_comm_table_triggered = False
+        return jsonify({"status": "updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/update_time', methods=['POST'])
 def update_time():

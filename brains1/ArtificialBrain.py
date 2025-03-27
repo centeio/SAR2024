@@ -639,7 +639,6 @@ class ArtificialBrain(ArtificialAgentBrain, ABC):
                 if water['location'] not in water_locs:
                     water_locs.append(water['location'])
         # remove doormat from water_locs
-        print("name",self.agent_name)
         if state[{"name": self.agent_name}]['location'] in water_locs:
             params['action_duration'] = 13
         else:
