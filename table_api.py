@@ -9,20 +9,18 @@ CORS(app)
 pref_table_triggered = False
 alloc_comm_table_triggered = False
 alloc_nocomm_table_triggered = False
+updated_agent_areas = None
+updated_human_areas = None
+beep_triggered = False
+
+
 PREFERENCES_CSV = "preferences.csv"
 
-beep_triggered = False
 
 def update_beep(beep_value):
     global beep_triggered
     print("BEEEEP", beep_value)
     beep_triggered = beep_value
-
-# Ensure CSV file has headers
-with open(PREFERENCES_CSV, mode='w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(["p_id", "preference", "preference_num"])
-
 
 # Serve static files from the 'images' directory
 @app.route('/images/<path:filename>')
@@ -56,6 +54,7 @@ def check_beep():
     
 @app.route('/update_preferences', methods=['POST'])
 def update_preferences():
+    global PREFERENCES_CSV
     try:
         print("here update preferences")
         global pref_table_triggered

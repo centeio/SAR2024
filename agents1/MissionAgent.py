@@ -86,6 +86,10 @@ class BaselineAgent(ArtificialBrain):
     def filter_observations(self, state):
         # Filtering of the world state before deciding on an action 
         return state
+    
+    # Updating my_areas based on what is passed through server
+    def set_myareas(self, new_areas):
+        self._my_areas = new_areas
 
     def decide_on_actions(self, state):
         # Identify team members

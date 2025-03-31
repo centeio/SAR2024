@@ -14,17 +14,6 @@ import argparse
 
 
 if __name__ == "__main__":
-    print("pref table triggered", table_api.pref_table_triggered)
-    print("alloc with comm table triggered", table_api.alloc_comm_table_triggered)
-    print("alloc without comm table triggered", table_api.alloc_nocomm_table_triggered)
-    table_api.pref_table_triggered = False # TURN True for table to appear in the beginning - to fix later and move to the end of tutorial
-    table_api.alloc_comm_table_triggered = False
-    table_api.alloc_nocomm_table_triggered = False
-
-    if (table_api.pref_table_triggered + table_api.alloc_comm_table_triggered + table_api.alloc_nocomm_table_triggered > 1):
-        print("ONLY ONE TABLE SHOULD BE TRIGGERED AT A TIME")
-        exit()
-    
     parser = argparse.ArgumentParser()
     parser.add_argument('--condition', dest='condition', required=True, choices={"tutorial", "mission_comm", "mission_nocomm", "pref_table"}, type=str, help='Add condition: tutorial, mission_comm, mission_nocomm, or pref_table')
     parser.add_argument('--agent', dest='agent_type', required=False, default="tutorial",choices={"will","nowill"}, type=str, help="Add the agent type: tutorial, will or nowill.")
@@ -32,11 +21,31 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    fld = os.getcwd()
+    fld_name = os.getcwd() + "/" + args.pid
+
+    isFolder = os.path.exists(fld_name)
+    if not isFolder:
+        # Create a new directory because it does not exist
+        os.makedirs(fld_name)
+        print("The new directory is created!")
 
     name = "Human"
 
-    builder = create_builder(condition=args.condition, agent_type=args.agent_type, name=name, participant_id = args.pid, folder=fld)
+
+    if args.condition == "pref_table":
+        table_api.pref_table_triggered = True
+        args.condition = "tutorial"
+    else:
+        table_api.pref_table_triggered = False
+
+    table_api.alloc_comm_table_triggered = False
+    table_api.alloc_nocomm_table_triggered = False
+
+    if (table_api.pref_table_triggered + table_api.alloc_comm_table_triggered + table_api.alloc_nocomm_table_triggered > 1):
+        print("ONLY ONE TABLE SHOULD BE TRIGGERED AT A TIME")
+        exit()
+
+    builder = create_builder(condition=args.condition, agent_type=args.agent_type, name=name, participant_id = args.pid, folder=fld_name)
 
 
     # Start overarching MATRX scripts and threads, such as the api and/or visualizer if requested. Here we also link our own media resource folder with MATRX.

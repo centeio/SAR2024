@@ -1,6 +1,7 @@
 import os
 import sys
 import numpy as np
+import pandas as pd
 import itertools
 from collections import OrderedDict
 from itertools import product
@@ -14,7 +15,7 @@ from matrx.actions.object_actions import RemoveObject
 from matrx.objects import EnvObject
 from matrx.world_builder import RandomProperty
 from matrx.goals import WorldGoal
-from agents1.OfficialAgent_new import BaselineAgent
+from agents1.MissionAgent import BaselineAgent
 from agents1.TutorialAgent import TutorialAgent
 from actions1.CustomActions import RemoveObjectTogether
 from brains1.HumanBrain import HumanBrain
@@ -22,6 +23,8 @@ from loggers.ActionLogger import ActionLoggerV2
 from datetime import datetime
 import requests
 import random
+import csv
+import table_api
 
 random_seed = 1
 verbose = False
@@ -59,6 +62,57 @@ fov_occlusion = True
 drop_width = 6
 drop_height = 6
 
+#Choose Will Agent's areas based on human preferences (on file):
+def pick_agent_areas(agent_type):
+    df = pd.read_csv(table_api.PREFERENCES_CSV)
+
+    if agent_type == "will":
+
+        close_pref = df.loc[df["pref_id"] == "close", "preference_num"].values[0]
+        far_pref = df.loc[df["pref_id"] == "far", "preference_num"].values[0]
+        water_pref = df.loc[df["pref_id"] == "water", "preference_num"].values[0]
+        dry_pref = df.loc[df["pref_id"] == "dry", "preference_num"].values[0]
+
+        # Determine task allocation based on preferences
+        if close_pref > far_pref:
+            if dry_pref > water_pref:
+                if close_pref >= dry_pref:
+                    my_areas = ["A1", "B1", "C1", "D1"]
+                else:
+                    my_areas = ["A1", "A2", "D1", "D2"]
+            elif water_pref > dry_pref:
+                if close_pref >= water_pref:
+                    my_areas = ["A1", "B1", "C1", "D1"]
+                else:
+                    my_areas = ["B1", "B2", "C1", "C2"]
+            else:  # No soil preference
+                my_areas = ["A1", "B1", "C1", "D1"]
+
+        elif far_pref > close_pref:
+            if dry_pref > water_pref:
+                if far_pref >= dry_pref:
+                    my_areas = ["A2", "B2", "C2", "D2"]
+                else:
+                    my_areas = ["A1", "A2", "D1", "D2"]
+            elif water_pref > dry_pref:
+                if far_pref >= water_pref:
+                    my_areas = ["A2", "B2", "C2", "D2"]
+                else:
+                    my_areas = ["B1", "B2", "C1", "C2"]
+            else:  # No soil preference
+                my_areas = ["A2", "B2", "C2", "D2"]
+
+        else:  # No distance preference
+            my_areas = ["A1", "A2", "B1", "B2"]
+
+        print("Selected tasks:", my_areas)
+    
+    else:
+        my_areas = ["A1", "A2", "B1", "B2"]
+
+    return my_areas
+
+
 # Add the drop zones to the world
 def add_drop_off_zones(builder, task_type):
     if task_type == "mission":
@@ -89,7 +143,6 @@ def add_agents_simulation(builder, condition, task_type, name, folder, victims):
             builder.add_human_agent(location=loc, agent_brain=brain, team=team_name, name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
 
-
 # Create the world for tutorial
 def build_tutorial(name, participant_id, folder, victims_per_area, areas):
     goal = CollectionGoal(max_nr_ticks=np.inf)
@@ -103,8 +156,8 @@ def build_tutorial(name, participant_id, folder, victims_per_area, areas):
     loc = (18,22)
     builder.add_human_agent(location=loc, agent_brain=brain, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
-
     return builder
+
 
 def build_mission(name, condition, participant_id, agent_type, folder, victims_per_area, areas):
     goal = CollectionGoal(max_nr_ticks=np.inf)
@@ -118,7 +171,12 @@ def build_mission(name, condition, participant_id, agent_type, folder, victims_p
     loc = (18,22)
     builder.add_human_agent(location=loc, agent_brain=brain, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
-    brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=[], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+    agent_areas = pick_agent_areas(agent_type)
+
+    if condition == "mission_comm": 
+        brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+    elif condition == "mission_nocomm":
+        brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
     loc = (20,20)
     builder.add_agent(loc, brain1, team="Team", name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
@@ -195,15 +253,19 @@ def create_builder(condition, agent_type, name, participant_id, folder):
     random.seed(random_seed)
     # Set numpy's random generator
     np.random.seed(random_seed)
-    # Create the collection goal
+
+    table_api.PREFERENCES_CSV = folder + "/preferences.csv"
 
     areas = {"A1": {"top_left": (14,8), "width": 12, "height": 5, "color": pick_up_area_1_color}, "A2": {"top_left": (14,2), "width": 12, "height": 5, "color": pick_up_area_2_color},
                 "B1": {"top_left": (27,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "B2": {"top_left": (33,14), "width": 5, "height": 12, "color": pick_up_area_2_color},
                 "C1": {"top_left": (14,27), "width": 12, "height": 5, "color": pick_up_area_1_color}, "C2": {"top_left": (14,33), "width": 12, "height": 5, "color": pick_up_area_2_color},
                 "D1": {"top_left": (8,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "D2": {"top_left": (2,14), "width": 5, "height": 12, "color": pick_up_area_2_color}}
 
-
-    if condition=="tutorial":
+    if condition== "tutorial":
+        with open(table_api.PREFERENCES_CSV, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["pref_id", "preference", "preference_num"])
+        
         builder = build_tutorial(name, participant_id, folder, victims_per_area_tutorial, areas)
 
     # Create the world builder
