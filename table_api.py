@@ -9,17 +9,17 @@ CORS(app)
 pref_table_triggered = False
 alloc_comm_table_triggered = False
 alloc_nocomm_table_triggered = False
-updated_agent_areas = None
-updated_human_areas = None
+updated_agent_areas = False
 beep_triggered = False
 
 
 PREFERENCES_CSV = "preferences.csv"
 
+agent_areas = []
+
 
 def update_beep(beep_value):
     global beep_triggered
-    print("BEEEEP", beep_value)
     beep_triggered = beep_value
 
 # Serve static files from the 'images' directory
@@ -50,7 +50,13 @@ def check_beep():
         return jsonify({"play_beep": True}), 200
     else:
         return jsonify({"play_beep": False}), 200   
+    
+@app.route('/close_allocation_nocomm', methods=['GET'])
+def close_allocation_nocomm():
+    global alloc_nocomm_table_triggered
 
+    alloc_nocomm_table_triggered = False
+    return jsonify({"status": "closed"}), 200
     
 @app.route('/update_preferences', methods=['POST'])
 def update_preferences():
@@ -85,29 +91,35 @@ def update_preferences():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/update_allocation_nocomm', methods=['POST'])
-def update_allocation_nocomm():
-    try:
-        global alloc_nocomm_table_triggered
-        data = request.get_json(force=True)
-        # TODO actually update tasks
-        print(data)
-        alloc_nocomm_table_triggered = False
-        return jsonify({"status": "updated"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    
+@app.route('/show_alloc', methods=['POST'])
+def show_alloc():
+    allocation = {}
+
+    # Populate allocation from agent_areas (if any)
+    if agent_areas:
+        for area in agent_areas:
+            allocation[f"p_{area}"] = "Artificial Agent"
+
+    return jsonify({"alloc": allocation})
     
 @app.route('/update_allocation_comm', methods=['POST'])
 def update_allocation_comm():
     try:
+        global agent_areas, alloc_comm_table_triggered, updated_agent_areas
         data = request.get_json(force=True)
-        global alloc_comm_table_triggered
-        # TODO actually update tasks
+        print(data)
+
+        agent_areas = data.get("agent_areas", [])
+        print("areas table_api", agent_areas)
+
         alloc_comm_table_triggered = False
-        return jsonify({"status": "updated"}), 200
+        updated_agent_areas = True
+
+        return jsonify({"status": "updated"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+    
 
 @app.route('/update_time', methods=['POST'])
 def update_time():

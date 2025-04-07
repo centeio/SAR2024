@@ -172,6 +172,7 @@ def build_mission(name, condition, participant_id, agent_type, folder, victims_p
     builder.add_human_agent(location=loc, agent_brain=brain, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
     agent_areas = pick_agent_areas(agent_type)
+    table_api.agent_areas = agent_areas
 
     if condition == "mission_comm": 
         brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations

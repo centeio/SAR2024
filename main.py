@@ -31,15 +31,17 @@ if __name__ == "__main__":
 
     name = "Human"
 
+    table_api.pref_table_triggered = False
+    table_api.alloc_comm_table_triggered = False
+    table_api.alloc_nocomm_table_triggered = False
 
     if args.condition == "pref_table":
         table_api.pref_table_triggered = True
         args.condition = "tutorial"
-    else:
-        table_api.pref_table_triggered = False
-
-    table_api.alloc_comm_table_triggered = False
-    table_api.alloc_nocomm_table_triggered = False
+    elif args.condition == "mission_comm":
+        table_api.alloc_comm_table_triggered = True
+    elif args.condition == "mission_nocomm":
+        table_api.alloc_nocomm_table_triggered = True
 
     if (table_api.pref_table_triggered + table_api.alloc_comm_table_triggered + table_api.alloc_nocomm_table_triggered > 1):
         print("ONLY ONE TABLE SHOULD BE TRIGGERED AT A TIME")

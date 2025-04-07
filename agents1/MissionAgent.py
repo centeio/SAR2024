@@ -68,14 +68,7 @@ class BaselineAgent(ArtificialBrain):
         self._received_messages = []
         self._moving = False
         self._last_vic = 0
-
-        if condition == "mission_comm":
-            table_api.alloc_comm_table_triggered = True
-            table_api.alloc_nocomm_table_triggered = False
-
-        elif condition == "mission_nocomm":
-            table_api.alloc_comm_table_triggered = False
-            table_api.alloc_nocomm_table_triggered = True
+        self._condition = condition
 
     def initialize(self):
         # Initialization of the state tracker and navigation algorithm
@@ -104,6 +97,13 @@ class BaselineAgent(ArtificialBrain):
 
         # Ongoing loop until the task is terminated, using different phases for defining the agent's behavior
         while True:
+            if table_api.updated_agent_areas:
+                print("UPDATE AREAS", table_api.agent_areas)
+                self._my_areas = table_api.agent_areas
+                table_api.updated_agent_areas = False
+
+                self._phase = Phase.INTRO
+
             if Phase.INTRO == self._phase:
                 # Send introduction message
                 # TODO Wait untill the human starts moving before going to the next phase, otherwise remain idle
@@ -112,6 +112,7 @@ class BaselineAgent(ArtificialBrain):
                     return None, {}
                 else:
                     self._phase = Phase.FIND_NEXT_GOAL
+                    return None, {}
                     
             # phases: planning - update plan - go to next victim in own areas - bring vicitm to drop zone - wait for turn - drop victim
 
