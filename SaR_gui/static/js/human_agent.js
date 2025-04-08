@@ -70,7 +70,8 @@ function close_alloc_comm_table() {
 
     // Build the updated allocation based on the user's choices
     let updatedAllocation = {
-        agent_areas: []
+        agent_areas: [],
+        human_areas: []
     };
 
     console.log(dropdowns)
@@ -86,7 +87,10 @@ function close_alloc_comm_table() {
             console.log(area)
             updatedAllocation.agent_areas.push(area);
         }
-        console.log(updatedAllocation.agent_areas)
+        if (selectedValue === "Human Teammate") {
+            updatedAllocation.human_areas.push(area);
+        }
+
     });
 
     // Send updated allocation to the backend
@@ -202,17 +206,6 @@ function showAlloc(comm) {
     .catch(error => console.error('Error fetching allocation data:', error));
 }
 
-
-function showAllocComm() {
-    document.getElementById('alloc_comm_overlay').style.display = 'flex';
-    toggle_pause(); // Pause the game when the overlay is shown
-}
-
-function showAllocNoComm() {
-    document.getElementById('alloc_nocomm_overlay').style.display = 'flex';
-    toggle_pause(); // Pause the game when the overlay is shown
-}
-
 function checkCommunication() {
     fetch('http://localhost:5001/check_communication')
         .then(response => response.json())
@@ -237,18 +230,45 @@ function playBeep() {
     beep_sound.play()
 }
 
-function checkBeep() {
-    fetch('http://localhost:5001/check_beep')
+function checkUpdates() {
+    fetch('http://localhost:5001/check_updates')
         .then(response => response.json())
         .then(data => {
-            console.log(data.play_beep)
+            console.log(data.play_beep);
+
+            // Play beep if triggered
             if (data.play_beep) {
                 playBeep();
             }
-        })
-        .catch(error => console.error('Error checking beep:', error));    
 
+            // Update score
+            const scoreDiv = document.getElementById('score');
+            if (scoreDiv) {
+                scoreDiv.textContent = `Score: ${data.total_score};`;
+            }
+
+            // Convert time_water from seconds to mm:ss
+            const minutes = Math.floor(data.time_water / 60);
+            const seconds = data.time_water % 60;
+            const formattedTime = `${minutes}m ${seconds}s`;
+
+            // Update water time
+            const waterTimeDiv = document.getElementById('water_time');
+            if (waterTimeDiv) {
+                waterTimeDiv.textContent = `Time in water: ${formattedTime};`;
+            }
+
+            // Update tasks (human_areas)
+            const tasksDiv = document.getElementById('tasks');
+            if (tasksDiv && Array.isArray(data.human_areas)) {
+                const taskList = data.human_areas.join(', ');
+                tasksDiv.textContent = `Human tasks: ${taskList}`;
+            }
+
+        })
+        .catch(error => console.error('Error checking updates:', error));    
 }
 
+
 setInterval(checkCommunication, 500);
-setInterval(checkBeep, 500);
+setInterval(checkUpdates, 500);

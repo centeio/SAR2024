@@ -62,6 +62,9 @@ fov_occlusion = True
 drop_width = 6
 drop_height = 6
 
+ALL_AREAS = ["A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2"]
+
+
 #Choose Will Agent's areas based on human preferences (on file):
 def pick_agent_areas(agent_type):
     df = pd.read_csv(table_api.PREFERENCES_CSV)
@@ -173,6 +176,9 @@ def build_mission(name, condition, participant_id, agent_type, folder, victims_p
 
     agent_areas = pick_agent_areas(agent_type)
     table_api.agent_areas = agent_areas
+
+    # After assigning `my_areas` to the agent:
+    table_api.human_areas = [area for area in ALL_AREAS if area not in agent_areas]
 
     if condition == "mission_comm": 
         brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations

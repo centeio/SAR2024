@@ -11,11 +11,14 @@ alloc_comm_table_triggered = False
 alloc_nocomm_table_triggered = False
 updated_agent_areas = False
 beep_triggered = False
+total_score = 0
+time_water = 0
 
 
 PREFERENCES_CSV = "preferences.csv"
 
 agent_areas = []
+human_areas = []
 
 
 def update_beep(beep_value):
@@ -42,14 +45,15 @@ def check_communication():
                     "show_alloc_comm": alloc_comm_table_triggered,
                     "show_alloc_nocomm": alloc_nocomm_table_triggered}), 200
 
-@app.route('/check_beep', methods=['GET'])
-def check_beep():
-    global beep_triggered
+@app.route('/check_updates', methods=['GET'])
+def check_updates():
+    global beep_triggered, total_score, time_water
     print("check beep", beep_triggered)
-    if beep_triggered:
-        return jsonify({"play_beep": True}), 200
-    else:
-        return jsonify({"play_beep": False}), 200   
+    return jsonify({"play_beep": beep_triggered, 
+                    "total_score": total_score,
+                    "time_water": time_water,
+                    "human_areas": human_areas}), 200
+     
     
 @app.route('/close_allocation_nocomm', methods=['GET'])
 def close_allocation_nocomm():
@@ -106,11 +110,13 @@ def show_alloc():
 @app.route('/update_allocation_comm', methods=['POST'])
 def update_allocation_comm():
     try:
-        global agent_areas, alloc_comm_table_triggered, updated_agent_areas
+        global agent_areas, human_areas, alloc_comm_table_triggered, updated_agent_areas
         data = request.get_json(force=True)
         print(data)
 
         agent_areas = data.get("agent_areas", [])
+        human_areas = data.get("human_areas", [])
+
         print("areas table_api", agent_areas)
 
         alloc_comm_table_triggered = False

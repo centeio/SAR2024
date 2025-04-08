@@ -334,8 +334,12 @@
               <div id="agent_dropdown" class="dropdown-menu">
               </div>
           </div>
-          <div id="elapsedTime" class="btn btn-dark"></div>
-          <div id="score" class="btn btn-dark"></div>
+          <div style="color: white; font-weight: bold; display: flex; gap: 10px; align-items: center;">
+            <div id="elapsedTime"></div>
+            <div id="score">Score: 0;</div>
+            <div id="water_time">Time in water: 0s;</div>
+            <div id="tasks">Human tasks: A1,A2</div>
+          </div>          
       </div>
       <div class="col-sm" align="right">
           <button type="button" class="btn btn-dark" id="chat_button" onclick="chatToggle()" data-toggle="collapse" data-target="#chat" aria-expanded="false" aria-controls="chat"><i class="fas fa-comments text-light"></i></button>
