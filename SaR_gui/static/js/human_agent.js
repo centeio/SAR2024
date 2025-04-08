@@ -67,14 +67,13 @@ function close_alloc_nocomm_table() {
 function close_alloc_comm_table() {
     const table = document.getElementById("alloc_table_comm");
     const dropdowns = table.querySelectorAll("select");
+    const overlay = document.getElementById("alloc_comm_overlay");
 
     // Build the updated allocation based on the user's choices
     let updatedAllocation = {
         agent_areas: [],
         human_areas: []
     };
-
-    console.log(dropdowns)
 
     dropdowns.forEach(dropdown => {
         let row = dropdown.closest("tr");
@@ -84,14 +83,39 @@ function close_alloc_comm_table() {
         let area = rowId.replace("p_", ""); // Extract just "A1" from "p_A1"
 
         if (selectedValue === "Artificial Agent") {
-            console.log(area)
             updatedAllocation.agent_areas.push(area);
         }
         if (selectedValue === "Human Teammate") {
             updatedAllocation.human_areas.push(area);
         }
-
     });
+
+    // Validation: Check if each has exactly 4 areas
+    if (updatedAllocation.agent_areas.length !== 4 || updatedAllocation.human_areas.length !== 4) {
+        // Find or create the error message
+        let errorMsg = document.getElementById("alloc_comm_error_msg");
+
+        if (!errorMsg) {
+            errorMsg = document.createElement("div");
+            errorMsg.id = "alloc_comm_error_msg";
+            errorMsg.style.color = "red";
+            errorMsg.style.marginTop = "10px";
+            errorMsg.style.textAlign = "center";
+            errorMsg.textContent = "Please select four areas for each team member.";
+
+            // Append it directly under the table
+            table.parentNode.insertBefore(errorMsg, table.nextSibling);
+        } else {
+            errorMsg.textContent = "Please select four areas for each team member.";
+        }
+        return; // Stop the function here, but keep the overlay open for updates
+    }
+
+    // Clear any existing error message if the validation passes
+    const existingError = document.getElementById("alloc_comm_error_msg");
+    if (existingError) {
+        existingError.remove();
+    }
 
     // Send updated allocation to the backend
     fetch('http://localhost:5001/update_allocation_comm', {
@@ -104,6 +128,7 @@ function close_alloc_comm_table() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'updated') {
+            // Only close the overlay when the allocation is successfully updated
             document.getElementById('alloc_comm_overlay').style.display = 'none';
             console.log("Allocation updated successfully");
             toggle_start(); // Resume the game
@@ -113,7 +138,6 @@ function close_alloc_comm_table() {
     })
     .catch(error => console.error('Error sending allocation update:', error));
 }
-
 
 function close_pref_table() {
     const table = document.getElementById("pref_table");
