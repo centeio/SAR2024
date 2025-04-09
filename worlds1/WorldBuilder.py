@@ -372,49 +372,46 @@ class CollectionGoal(WorldGoal):
         self.__all_vics = vics
 
     def __check_completion(self, grid_world):
-        # Get the current tick number
-        curr_tick = grid_world.current_nr_ticks
-        coll_count = 0
-        # loop through all zones, check the victims and set the tick if satisfied
-        #print("goal vics", self._goal_vics)
+        # Update internal victim tracking
         self.__update_victims(grid_world)
-        for v in self.__goal_vics:
-            #print("Here", v['name'])
-            length = len(v['name'])
-            drop_order = v['name'][9:length-1]
-            #print(drop_order, self._last_vic, self._goal_vic['order'])
-            vic_name = "victim_" + drop_order + "_"
-            for v2 in self.__all_vics:
-                #print("names", v2['name'], vic_name)
-                if v2['name'] == vic_name:
-                    #print("location", v2['location'], v['location'])
-                    if v2['location'] == v['location']:
-                        coll_count += 1
-                        break
 
-        # Now check if all victims are collected
-        if coll_count == len(self.__goal_vics):
-            is_satisfied = True
-        else:
-            is_satisfied = False
-        
+        # Sort goal victims by their required drop order
+        sorted_goal_vics = sorted(self.__goal_vics, key=lambda v: int(v['name'][9:-1]))
+
+        dropped_vics = set()
+        score = 0
+        coll_count = 0
+
+        for i, goal_vic in enumerate(sorted_goal_vics):
+            expected_order = int(goal_vic['name'][9:-1])
+            expected_name = f"victim_{expected_order}_"
+            expected_location = goal_vic['location']
+
+            # Search for matching dropped victim
+            for v in self.__all_vics:
+                if v['name'] == expected_name and v['location'] == expected_location:
+                    # Victim is correctly dropped
+                    coll_count += 1
+
+                    # Check if all previous victims are already dropped
+                    all_previous_dropped = all(
+                        f"victim_{j}_" in dropped_vics
+                        for j in range(1, expected_order)
+                    )
+
+                    # Award score accordingly
+                    score += 5 if all_previous_dropped else 2
+
+                    # Mark this victim as dropped
+                    dropped_vics.add(expected_name)
+                    break  # Move to next goal victim
+
+        # Completion: all goal victims have been dropped correctly
+        is_satisfied = (coll_count == len(self.__goal_vics))
         progress = coll_count
 
+        self.__score = score
+        table_api.total_score = score
+        self.__progress = progress
+
         return is_satisfied, progress
-    
-
-def trigger_table():
-    generate_table_html()
-    generate_table_json()
-
-    try:
-        requests.get('http://localhost:5001/trigger_communication')
-    except Exception as e:
-        print(f"Failed to send communication trigger: {e}")
-
-def generate_table_html():
-    # make interactive table with listed tasks
-    return
-
-def generate_table_json():
-    return
