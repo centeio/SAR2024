@@ -273,13 +273,13 @@ function checkUpdates() {
 
             // Convert time_water from seconds to mm:ss
             const minutes = Math.floor(data.time_water / 60);
-            const seconds = data.time_water % 60;
-            const formattedTime = `${minutes}m ${seconds}s`;
+            const seconds = Math.floor(data.time_water % 60);
+            const formattedTime = `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
 
             // Update water time
             const waterTimeDiv = document.getElementById('water_time');
             if (waterTimeDiv) {
-                waterTimeDiv.textContent = `Time in water: ${formattedTime};`;
+                waterTimeDiv.textContent = `Time in water: ${formattedTime}`;
             }
 
             // Update tasks (human_areas)

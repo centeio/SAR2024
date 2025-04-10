@@ -9,7 +9,9 @@ from matrx.agents import HumanAgentBrain
 from matrx.messages import Message
 from matrx.actions.move_actions import MoveNorth, MoveNorthEast, MoveEast, MoveSouthEast, MoveSouth, MoveSouthWest, MoveWest, MoveNorthWest
 from actions1.CustomActions import RemoveObjectTogether, Idle, CarryObject, CarryObjectTogether, DropObjectTogether, Drop, RemoveObject
-from table_api import update_beep
+import table_api
+import time
+
 
 class HumanBrain(HumanAgentBrain):
     """ Creates an Human Agent which is an agent that can be controlled by a human.
@@ -29,6 +31,8 @@ class HumanBrain(HumanAgentBrain):
         self.__strength = strength
         self.__name = name
         self.water_locs = None
+        self.water_last_entry = None
+        self.total_time_water = 0.0
 
     def _factory_initialise(self, agent_name, agent_id, action_set,
                             sense_capability, agent_properties, rnd_seed,
@@ -221,6 +225,45 @@ class HumanBrain(HumanAgentBrain):
         action_kwargs = {}
         global beep_triggered
 
+
+        #check if in water
+        if self.water_locs == None: 
+            water_locs = []
+            if state[{"name": "water"}]:
+                for water in state[{"name": "water"}]:
+                    if water['location'] not in water_locs:
+                        water_locs.append(water['location'])
+            self.water_locs = water_locs
+                            
+        current_location = state.get({"name": self.__name}, {}).get('location')
+
+        in_water = current_location in self.water_locs if current_location else False
+
+        if in_water:
+            if self.water_last_entry is None:
+                self.water_last_entry = time.time()
+                table_api.update_beep(True)
+                print("water entry", self.water_last_entry)
+
+            # Continuously update: base total + active session time
+            now = time.time()
+            table_api.time_water = self.total_time_water + (now - self.water_last_entry)
+
+        else:
+            table_api.update_beep(False)
+
+            if self.water_last_entry is not None:
+                exit_time = time.time()
+                session_time = exit_time - self.water_last_entry
+                self.total_time_water += session_time
+                print("water exit", exit_time, "session time", session_time)
+
+                self.water_last_entry = None
+
+            # Not in water — send total as-is
+            table_api.time_water = self.total_time_water
+
+
         # if no keys were pressed, do nothing
         if user_input is None or user_input == []:
             return None, {}
@@ -317,20 +360,9 @@ class HumanBrain(HumanAgentBrain):
 
 
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:
-            if self.water_locs == None: # TODO remove this line if error comes up
-                water_locs = []
-                if state[{"name": "water"}]:
-                    for water in state[{"name": "water"}]:
-                        if water['location'] not in water_locs:
-                            water_locs.append(water['location'])
-                self.water_locs = water_locs
-                            
-            if state[{"name": self.__name}]['location'] in self.water_locs and state[{"name": self.__name}]['location']:
+            if in_water:
                 action == Idle.__name__
-                update_beep(True)
                 action_kwargs['action_duration'] = 5
-            else:
-                update_beep(False)
 
 
         return action, action_kwargs
