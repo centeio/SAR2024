@@ -1,10 +1,14 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-import csv
+import csv, time
+import pandas as pd
+from werkzeug.serving import make_server
+import threading
 
 # Initialize Flask app
-app = Flask(__name__, static_folder='static')
-CORS(app)
+port = 5001
+table_app = Flask(__name__, static_folder='static')
+CORS(table_app)
 
 pref_table_triggered = False
 alloc_comm_table_triggered = False
@@ -13,12 +17,16 @@ updated_agent_areas = False
 beep_triggered = False
 total_score = 0
 time_water = 0
+completeness = 0
 
-
-PREFERENCES_CSV = "preferences.csv"
+FOLDER_ID = ""
+PREFERENCES_CSV = ""
+ACTIONS_CSV = ""
 
 agent_areas = []
 human_areas = []
+
+action_logs =  pd.DataFrame(columns = ["condition","PID","agent","tick","local_time","location","vic_area","in_own_area?","action","victim","vic_drop_loc","vic_order","score","completeness","water_time"])
 
 
 def update_beep(beep_value):
@@ -26,18 +34,18 @@ def update_beep(beep_value):
     beep_triggered = beep_value
 
 # Serve static files from the 'images' directory
-@app.route('/images/<path:filename>')
+@table_app.route('/images/<path:filename>')
 def serve_image(filename):
     # Serve the image from the 'images' directory
     return send_from_directory('images', filename)
 
-@app.route('/trigger_communication', methods=['GET'])
+@table_app.route('/trigger_communication', methods=['GET'])
 def trigger_communication():
     global communication_triggered
     communication_triggered = True
     return jsonify({"status": "triggered"}), 200
 
-@app.route('/check_communication', methods=['GET'])
+@table_app.route('/check_communication', methods=['GET'])
 def check_communication():
     global pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered
     print("check comm", pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered)
@@ -45,7 +53,7 @@ def check_communication():
                     "show_alloc_comm": alloc_comm_table_triggered,
                     "show_alloc_nocomm": alloc_nocomm_table_triggered}), 200
 
-@app.route('/check_updates', methods=['GET'])
+@table_app.route('/check_updates', methods=['GET'])
 def check_updates():
     global beep_triggered, total_score, time_water
     print("check beep", beep_triggered)
@@ -53,16 +61,15 @@ def check_updates():
                     "total_score": total_score,
                     "time_water": time_water,
                     "human_areas": human_areas}), 200
-     
     
-@app.route('/close_allocation_nocomm', methods=['GET'])
+@table_app.route('/close_allocation_nocomm', methods=['GET'])
 def close_allocation_nocomm():
     global alloc_nocomm_table_triggered
 
     alloc_nocomm_table_triggered = False
     return jsonify({"status": "closed"}), 200
     
-@app.route('/update_preferences', methods=['POST'])
+@table_app.route('/update_preferences', methods=['POST'])
 def update_preferences():
     global PREFERENCES_CSV
     try:
@@ -96,7 +103,7 @@ def update_preferences():
         return jsonify({"error": str(e)}), 500
     
     
-@app.route('/show_alloc', methods=['POST'])
+@table_app.route('/show_alloc', methods=['POST'])
 def show_alloc():
     allocation = {}
 
@@ -107,7 +114,7 @@ def show_alloc():
 
     return jsonify({"alloc": allocation})
     
-@app.route('/update_allocation_comm', methods=['POST'])
+@table_app.route('/update_allocation_comm', methods=['POST'])
 def update_allocation_comm():
     try:
         global agent_areas, human_areas, alloc_comm_table_triggered, updated_agent_areas
@@ -127,18 +134,37 @@ def update_allocation_comm():
         return jsonify({"error": str(e)}), 500
     
 
-@app.route('/update_time', methods=['POST'])
+@table_app.route('/update_time', methods=['POST'])
 def update_time():
     global status_data
     data = request.get_json()
     status_data["elapsed_time"] = data.get("time", None)
     return jsonify({"status": "updated"}), 200
 
-@app.route('/get_status', methods=['GET'])
+@table_app.route('/get_status', methods=['GET'])
 def get_status():
     return jsonify(status_data), 200
 
 # Function to run the Flask server in a separate thread
 def run_table_flask():
+    global port
     print("Starting Flask server")
-    app.run(port=5001)
+    
+    # Create a server instance using make_server
+    server = make_server('0.0.0.0', port, table_app)
+    
+    # Store the server reference in app, so it can be accessed elsewhere for shutdown
+    table_app.table_server = server
+
+    # Start serving the Flask app
+    server.serve_forever()
+
+@table_app.route('/shutdown_table_api', methods=['POST'])
+def shutdown_table_api():
+    """ Shuts down the table API server by calling its shutdown method """
+    try:
+        # Shutdown the server in a separate thread to avoid blocking
+        threading.Thread(target=table_app.table_server.shutdown).start()
+        return "Table API server shutting down..."
+    except Exception as e:
+        return f"Error during shutdown: {str(e)}"

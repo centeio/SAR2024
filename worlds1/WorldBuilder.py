@@ -139,12 +139,6 @@ def add_agents_simulation(builder, condition, task_type, name, folder, victims):
         loc = (21,21)
         builder.add_agent(loc, brain2, team=team_name, name="Helper", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
-        # Add human agents based on condition, do not change human brain values
-        for human_agent_nr in range(human_agents_per_team):
-            brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, strength=condition, name=name)
-            loc = (18,22)
-            builder.add_human_agent(location=loc, agent_brain=brain, team=team_name, name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
-
 
 # Create the world for tutorial
 def build_tutorial(name, participant_id, folder, victims_per_area, areas):
@@ -155,7 +149,7 @@ def build_tutorial(name, participant_id, folder, victims_per_area, areas):
     build_areas_w_victims(builder, victims_per_area, areas)
     build_sar_env(builder)
 
-    brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, name=name)
+    brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition="tutorial", name=name)
     loc = (18,22)
     builder.add_human_agent(location=loc, agent_brain=brain, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
@@ -170,20 +164,20 @@ def build_mission(name, condition, participant_id, agent_type, folder, victims_p
     victims = build_areas_w_victims(builder, victims_per_area, areas)
     build_sar_env(builder)
 
-    brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, name=name)
-    loc = (18,22)
-    builder.add_human_agent(location=loc, agent_brain=brain, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
-
     agent_areas = pick_agent_areas(agent_type)
     table_api.agent_areas = agent_areas
-
     # After assigning `my_areas` to the agent:
     table_api.human_areas = [area for area in ALL_AREAS if area not in agent_areas]
 
+
+    brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition=condition, name=name, victim_order=victims, participant_id=participant_id, my_areas=table_api.human_areas)
+    loc = (18,22)
+    builder.add_human_agent(location=loc, agent_brain=brain, participant_id=participant_id, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
+
     if condition == "mission_comm": 
-        brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+        brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
     elif condition == "mission_nocomm":
-        brain1 = BaselineAgent(slowdown=1, condition=condition, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
+        brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
     loc = (20,20)
     builder.add_agent(loc, brain1, team="Team", name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
@@ -260,8 +254,6 @@ def create_builder(condition, agent_type, name, participant_id, folder):
     random.seed(random_seed)
     # Set numpy's random generator
     np.random.seed(random_seed)
-
-    table_api.PREFERENCES_CSV = folder + "/preferences.csv"
 
     areas = {"A1": {"top_left": (14,8), "width": 12, "height": 5, "color": pick_up_area_1_color}, "A2": {"top_left": (14,2), "width": 12, "height": 5, "color": pick_up_area_2_color},
                 "B1": {"top_left": (27,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "B2": {"top_left": (33,14), "width": 5, "height": 12, "color": pick_up_area_2_color},
@@ -408,10 +400,11 @@ class CollectionGoal(WorldGoal):
 
         # Completion: all goal victims have been dropped correctly
         is_satisfied = (coll_count == len(self.__goal_vics))
-        progress = coll_count
+        progress = coll_count / len(self.__goal_vics)
 
         self.__score = score
         table_api.total_score = score
         self.__progress = progress
+        table_api.completeness = progress
 
         return is_satisfied, progress

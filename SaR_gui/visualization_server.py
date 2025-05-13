@@ -97,14 +97,13 @@ def start_view():
 
 @app.route('/shutdown_visualizer', methods=['POST'])
 def shutdown():
-    """ Shuts down the visualizer by stopping the Flask thread
-
-    Returns
-        string
-    -------
-    """
-    s.shutdown()
-    return "Server shutting down..."
+    """ Gracefully shuts down the visualizer server """
+    try:
+        # Shutdown the server in a separate thread to avoid blocking
+        threading.Thread(target=app.visualizer_server.shutdown).start()
+        return "Visualizer server shutting down..."
+    except Exception as e:
+        return f"Error during visualizer shutdown: {str(e)}"
 
 
 @app.route('/fetch_external_media/<path:filename>')
@@ -150,9 +149,10 @@ def run_matrx_visualizer(verbose, media_folder):
     print("Starting visualization server")
     print("Initialized app:", app)
     s = make_server('0.0.0.0', port, app)
-    vis_thread = threading.Thread(target=s.serve_forever)
-    vis_thread.start()
-    return vis_thread
+
+    app.visualizer_server = s
+
+    s.serve_forever()
 
 if __name__ == "__main__":
     run_matrx_visualizer()

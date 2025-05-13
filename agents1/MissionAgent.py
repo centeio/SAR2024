@@ -1,5 +1,6 @@
 import sys, random, enum, ast, time, csv
 import numpy as np
+import pandas as pd
 from matrx import grid_world
 from brains1.ArtificialBrain import ArtificialBrain
 from actions1.CustomActions import *
@@ -16,7 +17,6 @@ from matrx.messages.message_manager import MessageManager
 from actions1.CustomActions import RemoveObjectTogether, CarryObjectTogether, DropObjectTogether, CarryObject, Drop
 import table_api
 
-
 class Phase(enum.Enum):
     INTRO = 1,
     FIND_NEXT_GOAL = 2,
@@ -30,11 +30,12 @@ class Phase(enum.Enum):
 
 
 class BaselineAgent(ArtificialBrain):
-    def __init__(self, slowdown, condition, agent_type, agent_name, human_name, my_areas, victim_order, folder):
+    def __init__(self, slowdown, condition, participant_id, agent_type, agent_name, human_name, my_areas, victim_order, folder):
         super().__init__(slowdown, agent_type, agent_name, folder)
         # Initialization of some relevant variables
         self._tick = None
         self._slowdown = slowdown
+        self._participant_id = participant_id
         self._agent_type = agent_type
         self._human_name = human_name
         self._agent_name = agent_name
@@ -75,6 +76,36 @@ class BaselineAgent(ArtificialBrain):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
         self._navigator = Navigator(agent_id=self.agent_id, action_set=self.action_set,
                                     algorithm=Navigator.A_STAR_ALGORITHM)
+        #self._action_logs = pd.DataFrame(columns = ["condition","PID","agent","tick","local_time","location","vic_area","in_own_area?","action","victim","vic_drop_loc","vic_order","score","completeness","water_time"])
+
+        
+    def log_action_df(self, state, action, victim):
+        my_area = False
+        if victim["area"] in self._my_areas:
+            my_area = True
+
+        new_row = {
+            "condition": self._condition,
+            "PID": self._participant_id,
+            "agent": self._agent_type,
+            "tick": state['World']['nr_ticks'],
+            "local_time": int(time.time()),
+            "location": state[self.agent_id]['location'],
+            "vic_area": victim["area"],
+            "in_own_area?": my_area,
+            "action": action,
+            "victim": victim["name"],
+            "vic_drop_loc": victim["drop_location"],
+            "vic_order": victim["order"],
+            "score": table_api.total_score,
+            "completeness": table_api.completeness,
+            "water_time": table_api.time_water,
+        }
+
+        table_api.action_logs = pd.concat([table_api.action_logs, pd.DataFrame([new_row])], ignore_index=True)
+        print(table_api.action_logs)
+
+        return True
 
     def filter_observations(self, state):
         # Filtering of the world state before deciding on an action 
@@ -179,6 +210,11 @@ class BaselineAgent(ArtificialBrain):
 
                         self._collected_victims.append(self._goal_vic)
                         self._carrying = True
+
+                        # log that agent picked up victim
+                        if self._condition != "tutorial":
+                            self.log_action_df(state,"take_victim",self._goal_vic)
+
                         return CarryObject.__name__, {'object_id': self._goal_vic['name'], 'human_name': self._human_name}
                 
                 return None, {}
@@ -233,6 +269,7 @@ class BaselineAgent(ArtificialBrain):
                                 return None, {}
                             else:
                                 print("Dropping victim")
+                                # log that agent dropped victim
                                 self._waiting = False
                                 length2 = len(coll_vic['name'])
                                 self._last_vic = coll_vic['name'][7:length2-1]
@@ -245,6 +282,9 @@ class BaselineAgent(ArtificialBrain):
                     self._tick = state['World']['nr_ticks']
                     self._carrying = False
                     # Drop the victim on the correct location on the drop zone
+                    if self._condition != "tutorial":
+                        self.log_action_df(state,"drop_victim",self._goal_vic)
+
                     return Drop.__name__, {'human_name': self._human_name}
                 
                 return None, {}

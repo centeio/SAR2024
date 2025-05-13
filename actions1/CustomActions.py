@@ -517,9 +517,9 @@ class Drop(Action):
         """
         reg_ag = grid_world.registered_agents[agent_id]
         drop_range = 1 if 'drop_range' not in kwargs else kwargs['drop_range']
-        other_human = world_state[{"name": kwargs['human_name']}]
-        other_agent_id = world_state[{"name": "RescueBot"}]['obj_id']
-        other_agent = grid_world.registered_agents[other_agent_id]
+        #other_human = world_state[{"name": kwargs['human_name']}]
+        #other_agent_id = world_state[{"name": "RescueBot"}]['obj_id']
+        #other_agent = grid_world.registered_agents[other_agent_id]
         print("_is_possible")
         # If no object id is given, the last item is dropped
         if 'object_id' in kwargs:

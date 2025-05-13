@@ -1,6 +1,7 @@
 import warnings
 import copy
 import numpy as np
+import pandas as pd
 from matrx.actions.object_actions import GrabObject, DropObject, RemoveObject
 from matrx.actions.door_actions import OpenDoorAction, CloseDoorAction
 from matrx.agents.agent_utils.state import State
@@ -16,7 +17,7 @@ import time
 class HumanBrain(HumanAgentBrain):
     """ Creates an Human Agent which is an agent that can be controlled by a human.
     """
-    def __init__(self, memorize_for_ticks=None, fov_occlusion=False, max_carry_objects=1, grab_range=1, drop_range=1, door_range=1, remove_range=1, strength='normal', name='human'):
+    def __init__(self, memorize_for_ticks=None, fov_occlusion=False, max_carry_objects=1, grab_range=1, drop_range=1, door_range=1, remove_range=1, condition='mission_nocomm', name='human',participant_id="000", victim_order={}, my_areas = []):
         super().__init__(memorize_for_ticks=memorize_for_ticks)
         self.__fov_occlusion = fov_occlusion
         if fov_occlusion:
@@ -28,11 +29,47 @@ class HumanBrain(HumanAgentBrain):
         self.__drop_range = drop_range
         self.__door_range = door_range
         self.__remove_range = remove_range
-        self.__strength = strength
         self.__name = name
+        self.__strength = 'normal'
+        self._victims = victim_order
+        self._participant_id = participant_id
+        self._condition =  condition
+        self._my_areas = my_areas
+        self._goal_vics = victim_order
         self.water_locs = None
         self.water_last_entry = None
         self.total_time_water = 0.0
+        self.current_location = None
+        self._last_victim = None
+
+    def log_action_df(self, state, action, victim):
+        my_area = False
+        print(victim)
+        if victim["area"] in self._my_areas:
+            my_area = True
+
+        new_row = {
+            "condition": self._condition,
+            "PID": self._participant_id,
+            "agent": "human",
+            "tick": state['World']['nr_ticks'],
+            "local_time": int(time.time()),
+            "location": self.current_location,
+            "vic_area": victim["area"],
+            "in_own_area?": my_area,
+            "action": action,
+            "victim": victim["name"],
+            "vic_drop_loc": victim["drop_location"],
+            "vic_order": victim["order"],
+            "score": table_api.total_score,
+            "completeness": table_api.completeness,
+            "water_time": table_api.time_water,
+        }
+
+        table_api.action_logs = pd.concat([table_api.action_logs, pd.DataFrame([new_row])], ignore_index=True)
+        print(table_api.action_logs)
+
+        return True
 
     def _factory_initialise(self, agent_name, agent_id, action_set,
                             sense_capability, agent_properties, rnd_seed,
@@ -235,9 +272,9 @@ class HumanBrain(HumanAgentBrain):
                         water_locs.append(water['location'])
             self.water_locs = water_locs
                             
-        current_location = state.get({"name": self.__name}, {}).get('location')
+        self.current_location = state.get({"name": self.__name}, {}).get('location')
 
-        in_water = current_location in self.water_locs if current_location else False
+        in_water = self.current_location in self.water_locs if self.current_location else False
 
         if in_water:
             if self.water_last_entry is None:
@@ -272,31 +309,7 @@ class HumanBrain(HumanAgentBrain):
         # associated with that key
         pressed_keys = user_input[-1]
         action = self.key_action_map[pressed_keys]
-
-        # if the user chose a grab together action, choose an object within grab_range
-        if action == CarryObjectTogether.__name__:
-            # Set grab range
-            action_kwargs['grab_range'] = self.__grab_range
-            # Set max amount of objects
-            action_kwargs['max_objects'] = self.__max_carry_objects
-            action_kwargs['human_name'] = self.__name
-
-            # grab the closest victim
-            obj_id = self.__select_random_obj_in_range(state,
-                                                  range_=self.__grab_range,
-                                                  property_to_check="is_movable")
-            action_kwargs['strength'] = self.__strength
-            if obj_id and 'critical' in obj_id:
-                action_kwargs['object_id'] = obj_id
-            if obj_id and 'mild' in obj_id:
-                action_kwargs['object_id'] = obj_id            
-
-        # If the user chose to drop an object in its inventory
-        elif action == DropObjectTogether.__name__:
-            action_kwargs['strength'] = self.__strength
-            action_kwargs['drop_range'] = self.__drop_range
-            action_kwargs['human_name'] = self.__name
-            pass            
+        
 
         if action == CarryObject.__name__:
             # Assign it to the arguments list
@@ -312,9 +325,20 @@ class HumanBrain(HumanAgentBrain):
                 self.__select_random_obj_in_range(state,
                                                   range_=self.__grab_range,
                                                   property_to_check="is_movable")
-            if obj_id and self.__strength!='weak':
+            if obj_id:
                 action_kwargs['object_id'] = obj_id
+                obj = state[obj_id]
+                obj_name = obj.get('name')
+
+                # Match victim by name
+                self._last_victim = next(
+                    (v for v in self._goal_vics if v['name'] == obj_name),
+                    None
+                )
+                if self._condition != "tutorial":
+                    self.log_action_df(state,"take_victim",self._last_victim)
             action_kwargs['action_type'] = 'alone'
+
 
         # If the user chose to drop an object in its inventory
         elif action == Drop.__name__:
@@ -323,40 +347,11 @@ class HumanBrain(HumanAgentBrain):
             action_kwargs['strength'] = self.__strength
             action_kwargs['drop_range'] = self.__drop_range
             action_kwargs['human_name'] = self.__name
+
+            if self._condition != "tutorial":
+                self.log_action_df(state,"drop_victim",self._last_victim)
+
             pass
-
-        # If the user chose to remove an object
-        elif action == RemoveObjectTogether.__name__:
-            # Assign it to the arguments list
-            # Set drop range
-            action_kwargs['remove_range'] = self.__remove_range
-            action_kwargs['human_name'] = self.__name
-
-            obj_id = \
-                self.__select_random_obj_in_range(state,
-                                                  range_=self.__remove_range,
-                                                  property_to_check="is_movable")
-            action_kwargs['object_id'] = obj_id
-            if obj_id and 'stone' in obj_id:
-                action_kwargs['action_duration'] = 25
-            if obj_id and 'rock' in obj_id:
-                action_kwargs['action_duration'] = 50
-        
-        # If the user chose to remove an object
-        elif action == RemoveObject.__name__:
-            # Assign it to the arguments list
-            # Set drop range
-            action_kwargs['remove_range'] = self.__remove_range
-            action_kwargs['human_name'] = self.__name
-
-            obj_id = \
-                self.__select_random_obj_in_range(state,
-                                                  range_=self.__remove_range,
-                                                  property_to_check="is_movable")
-            if obj_id and 'stone' in obj_id and self.__strength!='weak':                           
-                action_kwargs['object_id'] = obj_id
-                action_kwargs['action_duration'] = 200
-
 
 
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:
