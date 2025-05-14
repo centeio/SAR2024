@@ -7,7 +7,6 @@ import threading
 from SaR_gui import visualization_server
 from worlds1.WorldBuilder import create_builder
 from pathlib import Path
-from loggers.OutputLogger import log_multiple_actions
 from queue import Queue
 import table_api
 import argparse
@@ -38,6 +37,7 @@ if __name__ == "__main__":
 
     table_api.FOLDER_ID = fld_name
     table_api.PREFERENCES_CSV = fld_name + "/preferences.csv"
+    table_api.ALLOCATION_CSV = fld_name + "/allocation.csv"
     table_api.ACTIONS_CSV = fld_name + "/actions.csv"
 
     if args.condition == "pref_table":

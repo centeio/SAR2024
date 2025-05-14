@@ -4,18 +4,6 @@ import csv
 import glob
 import pathlib
 
-def log_multiple_actions(file_name, dataframe_list):
-    try:
-        combined_df = pd.concat(dataframe_list, ignore_index=True)
-    except Exception as e:
-        print(f"Error during concatenation: {e}")
-        return
-    try:
-        combined_df.to_csv(file_name, index=False)
-    except Exception as e:
-        print(f"Error while saving to CSV: {e}")
-
-
 def output_logger(fld):
     recent_dir = max(glob.glob(os.path.join(fld, '*/')), key=os.path.getmtime)
     recent_dir = max(glob.glob(os.path.join(recent_dir, '*/')), key=os.path.getmtime)

@@ -21,13 +21,14 @@ completeness = 0
 
 FOLDER_ID = ""
 PREFERENCES_CSV = ""
+ALLOCATION_CSV = ""
 ACTIONS_CSV = ""
 
 agent_areas = []
 human_areas = []
 
 action_logs =  pd.DataFrame(columns = ["condition","PID","agent","tick","local_time","location","vic_area","in_own_area?","action","victim","vic_drop_loc","vic_order","score","completeness","water_time"])
-
+allocation_log = pd.DataFrame(columns = ["condition","PID","area","agent_assignment","change?"])
 
 def update_beep(beep_value):
     global beep_triggered

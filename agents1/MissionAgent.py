@@ -1,6 +1,7 @@
-import sys, random, enum, ast, time, csv
+import sys, random, enum, ast, time, csv, os
 import numpy as np
 import pandas as pd
+from collections import Counter
 from matrx import grid_world
 from brains1.ArtificialBrain import ArtificialBrain
 from actions1.CustomActions import *
@@ -77,7 +78,24 @@ class BaselineAgent(ArtificialBrain):
         self._navigator = Navigator(agent_id=self.agent_id, action_set=self.action_set,
                                     algorithm=Navigator.A_STAR_ALGORITHM)
         #self._action_logs = pd.DataFrame(columns = ["condition","PID","agent","tick","local_time","location","vic_area","in_own_area?","action","victim","vic_drop_loc","vic_order","score","completeness","water_time"])
+        if self._condition == "mission_comm" or self._condition == "mission_nocomm":
+            self.log_allocation_df("agent", -1)
 
+
+    def log_allocation_df(self, decided_by, change):
+        allocation_log = pd.DataFrame([{"PID": self._participant_id,
+                                                "condition": self._condition,
+                                                "local_time": int(time.time()),
+                                                "human_areas": table_api.human_areas,
+                                                "agent_areas": table_api.agent_areas,
+                                                "decided_by": decided_by,
+                                                "changes": change}])
+        if os.path.exists(table_api.ALLOCATION_CSV):
+        # Append to the file without writing the header
+            allocation_log.to_csv(table_api.ALLOCATION_CSV, mode='a', header=False, index=False)
+        else:
+            # If the file does not exist, write the DataFrame with the header
+            allocation_log.to_csv(table_api.ALLOCATION_CSV, mode='w', header=True, index=False)
         
     def log_action_df(self, state, action, victim):
         my_area = False
@@ -130,13 +148,21 @@ class BaselineAgent(ArtificialBrain):
         while True:
             if table_api.updated_agent_areas:
                 print("UPDATE AREAS", table_api.agent_areas)
+                old_counts = Counter(self._my_areas)
+                new_counts = Counter(table_api.agent_areas)
+
+                # Elements that are different (symmetric difference in count)
+                diff = (old_counts - new_counts) + (new_counts - old_counts)
+                num_changed = sum(diff.values()) // 2  # Divide by 2 to count changes, not total excess
+
                 self._my_areas = table_api.agent_areas
                 table_api.updated_agent_areas = False
+
+                self.log_allocation_df("human", num_changed)
 
                 self._phase = Phase.INTRO
 
             if Phase.INTRO == self._phase:
-                # Send introduction message
                 # TODO Wait untill the human starts moving before going to the next phase, otherwise remain idle
                 #if not state[{'is_human_agent': True}]:
                 if table_api.alloc_comm_table_triggered == True or table_api.alloc_nocomm_table_triggered == True:
