@@ -85,6 +85,7 @@ class BaselineAgent(ArtificialBrain):
     def log_allocation_df(self, decided_by, change):
         allocation_log = pd.DataFrame([{"PID": self._participant_id,
                                                 "condition": self._condition,
+                                                "agent_type": self._agent_type,
                                                 "local_time": int(time.time()),
                                                 "human_areas": table_api.human_areas,
                                                 "agent_areas": table_api.agent_areas,
@@ -97,15 +98,14 @@ class BaselineAgent(ArtificialBrain):
             # If the file does not exist, write the DataFrame with the header
             allocation_log.to_csv(table_api.ALLOCATION_CSV, mode='w', header=True, index=False)
         
-    def log_action_df(self, state, action, victim):
-        my_area = False
-        if victim["area"] in self._my_areas:
-            my_area = True
+    def log_action_df(self, state, action, victim, in_order="NA"):
+        my_area =  victim["area"] in self._my_areas
+        at_drop_off = victim["drop_location"] == state[self.agent_id]['location']
 
         new_row = {
             "condition": self._condition,
             "PID": self._participant_id,
-            "agent": self._agent_type,
+            "agent_type": self._agent_type,
             "tick": state['World']['nr_ticks'],
             "local_time": int(time.time()),
             "location": state[self.agent_id]['location'],
@@ -115,13 +115,15 @@ class BaselineAgent(ArtificialBrain):
             "victim": victim["name"],
             "vic_drop_loc": victim["drop_location"],
             "vic_order": victim["order"],
+            "at_drop_off": at_drop_off,
+            "in_order": in_order,
             "score": table_api.total_score,
             "completeness": table_api.completeness,
             "water_time": table_api.time_water,
         }
 
         table_api.action_logs = pd.concat([table_api.action_logs, pd.DataFrame([new_row])], ignore_index=True)
-        print(table_api.action_logs)
+        #print(table_api.action_logs)
 
         return True
 
@@ -184,12 +186,12 @@ class BaselineAgent(ArtificialBrain):
                 for vic in self._ordered_victims[self._last_vic:]:
                     if vic['area'] in self._my_areas:
                     #  check if victim still at location
-                        # state.get_with_property()?
-                        #  then go to location
-                        self._goal_vic = vic
-
-                        self._phase = Phase.PLAN_PATH_TO_VICTIM
-                        return Idle.__name__, {'action_duration': 10}
+                        if state[vic['name']] != None and state[vic['name']].get('location') == vic['location']:
+                            self._goal_vic = vic
+                            self._phase = Phase.PLAN_PATH_TO_VICTIM
+                            return Idle.__name__, {'action_duration': 10}
+                        else:
+                            continue
                 
                 return None, {}
 
@@ -220,28 +222,28 @@ class BaselineAgent(ArtificialBrain):
                 return None, {}
 
             if Phase.TAKE_VICTIM == self._phase:
-
                 objects = []
-                # When the victim has to be carried by human and agent together, check whether human has arrived at the victim's location
                 for info in state.values():
                     # When the victim has to be carried by human and agent together, check whether human has arrived at the victim's location
-                    if 'class_inheritance' in info and 'CollectableBlock' in info['class_inheritance'] and self._goal_vic['name'] in info['name'] and \
-                        utils.get_distance(info['location'],state[self.agent_id]['location']) < 1:
+                    if 'class_inheritance' in info and 'CollectableBlock' in info['class_inheritance'] and self._goal_vic['name'] in info['name']:
+                        if info['location'] != None and utils.get_distance(info['location'],state[self.agent_id]['location']) < 1:
 
-                        objects.append(info)
+                            objects.append(info)
 
-                        print("Taking victim")
+                            print("Taking victim")
 
-                        self._phase = Phase.PLAN_PATH_TO_DROPPOINT
+                            self._phase = Phase.PLAN_PATH_TO_DROPPOINT
 
-                        self._collected_victims.append(self._goal_vic)
-                        self._carrying = True
+                            self._collected_victims.append(self._goal_vic)
+                            self._carrying = True
 
-                        # log that agent picked up victim
-                        if self._condition != "tutorial":
-                            self.log_action_df(state,"take_victim",self._goal_vic)
+                            # log that agent picked up victim
+                            if self._condition != "tutorial":
+                                self.log_action_df(state,"take_victim",self._goal_vic)
 
-                        return CarryObject.__name__, {'object_id': self._goal_vic['name'], 'human_name': self._human_name}
+                            return CarryObject.__name__, {'object_id': self._goal_vic['name'], 'human_name': self._human_name}
+                        else:
+                            self._phase = Phase.FIND_NEXT_GOAL
                 
                 return None, {}
                 
@@ -261,7 +263,7 @@ class BaselineAgent(ArtificialBrain):
                 self._state_tracker.update(state)
                 # Follow the path to the drop zone
                 action = self._navigator.get_move_action(self._state_tracker)
-                print("action", action)
+                #print("action", action)
                 if action is not None:
                     return action, {}
                 
@@ -273,45 +275,54 @@ class BaselineAgent(ArtificialBrain):
             if Phase.DROP_VICTIM == self._phase:
                # check if the agent can drop the victim
                 # i.e. check if all previous victims are in place
-                goal_victims = state[{'is_goal_block': True}]
-
-                #print(goal_victims)
+                   # Get the order of the last victim
                 
-                for v in goal_victims:
-                    length = len(v['name'])
-                    drop_order = v['name'][9:length-1]
-                    #print(drop_order, self._last_vic, self._goal_vic['order'])
-                    if int(drop_order) < self._goal_vic['order']:
-                        if int(drop_order) > int(self._last_vic):
-                            # if a victim is not in place, wait
-                            vic_name = "victim_" + drop_order + "_"
-                            coll_vic = state[{'name': vic_name}]
-                            #print("agent name", self._agent_name)
-                            #print("col vic", coll_vic)
-                            #print("vic", v)
-                            if coll_vic is None or coll_vic['location'] != v['location']:
-                                print("Waiting for victim")
-                                self._waiting = True
-                                return None, {}
-                            else:
-                                print("Dropping victim")
-                                # log that agent dropped victim
-                                self._waiting = False
-                                length2 = len(coll_vic['name'])
-                                self._last_vic = coll_vic['name'][7:length2-1]
+                if self._goal_vic != None:
+                    last_order = int(self._goal_vic['name'][7:-1])
 
-                # otherwise, drop the victim
-                if not self._waiting:
-                    # Identify the next target victim to rescue
-                    self._last_vic = self._goal_vic['order']
-                    self._phase = Phase.FIND_NEXT_GOAL
-                    self._tick = state['World']['nr_ticks']
-                    self._carrying = False
-                    # Drop the victim on the correct location on the drop zone
-                    if self._condition != "tutorial":
-                        self.log_action_df(state,"drop_victim",self._goal_vic)
+                    # Check if all previous victims (1 to last_order - 1) are at their goal locations
+                    self._waiting = False
+                    expected_location = None
 
-                    return Drop.__name__, {'human_name': self._human_name}
+                    for i in range(1, last_order):
+                        victim_name = f"victim_{i}_"
+                        #victim not in the world at the moment, probably being carried by human
+                        if state[victim_name] is None:
+                            return None, {}
+
+                        actual_location = state[victim_name].get('location')
+
+                        for index, item in enumerate(self._ordered_victims):
+                            if item.get("name") == victim_name:
+                                expected_location = item.get("drop_location")
+
+                                break
+
+                        if expected_location != None and actual_location != expected_location:
+                            expected_location = None
+                            self._waiting = True
+                            break
+
+                    # otherwise, drop the victim
+                    if not self._waiting:
+                        # Identify the next target victim to rescue
+                        self._phase = Phase.FIND_NEXT_GOAL
+
+                        # update local state
+                        self._last_vic = self._goal_vic['order']
+                        self._tick = state['World']['nr_ticks']
+                        self._carrying = False
+
+                        table_api.agent_vics_saved_abs += 1
+                        table_api.total_score += 5
+
+                        # Log action
+                        if self._condition != "tutorial":
+                            self.log_action_df(state,"drop_victim",self._goal_vic, True)
+                            
+                                                
+                        # Drop the victim on the correct location on the drop zone
+                        return Drop.__name__, {'human_name': self._human_name}
                 
                 return None, {}
 

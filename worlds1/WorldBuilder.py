@@ -315,10 +315,6 @@ class CollectionGoal(WorldGoal):
         self.__all_vics = []
         self.__goal_vics = []
         self.__progress = 0
-        self.__score = 0
-    
-    def score(self, grid_world):
-        return self.__score
 
     def goal_reached(self, grid_world):
         if grid_world.current_nr_ticks >= self.max_nr_ticks:
@@ -335,7 +331,6 @@ class CollectionGoal(WorldGoal):
         # Go through each drop zone, and check if the victims are there on the right spot
         is_satisfied, progress = self.__check_completion(grid_world)
         # Progress in percentage
-        self.__progress = progress / len(self.__goal_vics)
         #print("goal vics", self.__drop_off.values())
 
         #print("Progress", self.__progress, "is_satisfied", is_satisfied)
@@ -367,44 +362,13 @@ class CollectionGoal(WorldGoal):
         # Update internal victim tracking
         self.__update_victims(grid_world)
 
-        # Sort goal victims by their required drop order
-        sorted_goal_vics = sorted(self.__goal_vics, key=lambda v: int(v['name'][9:-1]))
-
-        dropped_vics = set()
-        score = 0
-        coll_count = 0
-
-        for i, goal_vic in enumerate(sorted_goal_vics):
-            expected_order = int(goal_vic['name'][9:-1])
-            expected_name = f"victim_{expected_order}_"
-            expected_location = goal_vic['location']
-
-            # Search for matching dropped victim
-            for v in self.__all_vics:
-                if v['name'] == expected_name and v['location'] == expected_location:
-                    # Victim is correctly dropped
-                    coll_count += 1
-
-                    # Check if all previous victims are already dropped
-                    all_previous_dropped = all(
-                        f"victim_{j}_" in dropped_vics
-                        for j in range(1, expected_order)
-                    )
-
-                    # Award score accordingly
-                    score += 5 if all_previous_dropped else 2
-
-                    # Mark this victim as dropped
-                    dropped_vics.add(expected_name)
-                    break  # Move to next goal victim
 
         # Completion: all goal victims have been dropped correctly
+        coll_count = table_api.human_vics_saved_abs + table_api.agent_vics_saved_abs + table_api.agent_vics_saved_by_human_abs
         is_satisfied = (coll_count == len(self.__goal_vics))
         progress = coll_count / len(self.__goal_vics)
+        #print(coll_count,progress,len(self.__goal_vics))
 
-        self.__score = score
-        table_api.total_score = score
-        self.__progress = progress
         table_api.completeness = progress
 
         return is_satisfied, progress

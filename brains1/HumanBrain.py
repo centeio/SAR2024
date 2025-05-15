@@ -31,7 +31,6 @@ class HumanBrain(HumanAgentBrain):
         self.__remove_range = remove_range
         self.__name = name
         self.__strength = 'normal'
-        self._victims = victim_order
         self._participant_id = participant_id
         self._condition =  condition
         self._my_areas = my_areas
@@ -42,16 +41,13 @@ class HumanBrain(HumanAgentBrain):
         self.current_location = None
         self._last_victim = None
 
-    def log_action_df(self, state, action, victim):
-        my_area = False
-        print(victim)
-        if victim["area"] in self._my_areas:
-            my_area = True
-
+    def log_action_df(self, state, action, victim, in_order="NA"):
+        my_area = victim["area"] in self._my_areas
+        at_drop_off = victim["drop_location"] == self.current_location
         new_row = {
             "condition": self._condition,
             "PID": self._participant_id,
-            "agent": "human",
+            "agent_type": "human",
             "tick": state['World']['nr_ticks'],
             "local_time": int(time.time()),
             "location": self.current_location,
@@ -61,13 +57,15 @@ class HumanBrain(HumanAgentBrain):
             "victim": victim["name"],
             "vic_drop_loc": victim["drop_location"],
             "vic_order": victim["order"],
+            "at_drop_off": at_drop_off,
+            "in_order": in_order,
             "score": table_api.total_score,
             "completeness": table_api.completeness,
             "water_time": table_api.time_water,
         }
 
         table_api.action_logs = pd.concat([table_api.action_logs, pd.DataFrame([new_row])], ignore_index=True)
-        print(table_api.action_logs)
+        #print(table_api.action_logs)
 
         return True
 
@@ -348,10 +346,46 @@ class HumanBrain(HumanAgentBrain):
             action_kwargs['drop_range'] = self.__drop_range
             action_kwargs['human_name'] = self.__name
 
-            if self._condition != "tutorial":
-                self.log_action_df(state,"drop_victim",self._last_victim)
+            if self._last_victim != None:
+                # Check if victim dropped at its drop-off location
+                if self._last_victim['drop_location'] == self.current_location:
+                    # Check whether it is this player's job to drop this victim
+                    if self._last_victim["area"] in self._my_areas:
+                        table_api.human_vics_saved_abs += 1
+                    else:
+                        table_api.agent_vics_saved_by_human_abs += 1
 
-            pass
+                    # Get the order of the last victim
+                    last_order = int(self._last_victim['name'][7:-1])
+
+                    # Check if all previous victims (1 to last_order - 1) are at their goal locations
+                    all_previous_dropped = True
+                    for i in range(1, last_order):
+                        victim_name = f"victim_{i}_"
+                        if state[victim_name] is None:
+                            all_previous_dropped = False
+                            break
+
+                        actual_location = state[victim_name].get('location')
+
+                        for index, item in enumerate(self._goal_vics):
+                            if item.get("name") == victim_name:
+                                expected_location = item.get("drop_location")
+                                break
+                        if actual_location != expected_location:
+                            all_previous_dropped = False
+                            break
+
+
+                    # Award score accordingly
+                    if all_previous_dropped:
+                        table_api.total_score += 5 
+                        table_api.human_vics_in_order +=1 
+                    else:
+                        table_api.total_score += 2
+
+                if self._condition != "tutorial":
+                    self.log_action_df(state,"drop_victim",self._last_victim,all_previous_dropped)
 
 
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:

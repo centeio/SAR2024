@@ -39,6 +39,7 @@ if __name__ == "__main__":
     table_api.PREFERENCES_CSV = fld_name + "/preferences.csv"
     table_api.ALLOCATION_CSV = fld_name + "/allocation.csv"
     table_api.ACTIONS_CSV = fld_name + "/actions.csv"
+    table_api.FINAL_CSV = fld_name + "/final.csv"
 
     if args.condition == "pref_table":
         table_api.pref_table_triggered = True
@@ -52,6 +53,7 @@ if __name__ == "__main__":
         print("ONLY ONE TABLE SHOULD BE TRIGGERED AT A TIME")
         exit()
 
+    table_api.start_time = time.time()
     builder = create_builder(condition=args.condition, agent_type=args.agent_type, name=name, participant_id = args.pid, folder=fld_name)
 
 
@@ -80,7 +82,9 @@ if __name__ == "__main__":
 
     world.run(builder.api_info)
 
-    #LOG 
+    table_api.total_time = time.time() - table_api.start_time
+
+    # LOG ACTIONS
     try:
         if args.condition == "mission_comm" or args.condition == "mission_nocomm":
             if os.path.exists(table_api.ACTIONS_CSV):
@@ -89,8 +93,13 @@ if __name__ == "__main__":
             else:
                 # If the file does not exist, write the DataFrame with the header
                 table_api.action_logs.to_csv(table_api.ACTIONS_CSV, mode='w', header=True, index=False)
+        
+            # LOG FINAL
+            table_api.log_final_output(participant_id = args.pid, condition=args.condition, agent_type=args.agent_type)
+    
     except Exception as e:
         print(f"Error while logging: {e}")
+
 
 
     r1 = requests.post("http://localhost:" + str(table_api.port) + "/shutdown_table_api")

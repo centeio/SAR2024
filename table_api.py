@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-import csv, time
+import csv, time, os
 import pandas as pd
 from werkzeug.serving import make_server
 import threading
@@ -17,22 +17,60 @@ updated_agent_areas = False
 beep_triggered = False
 total_score = 0
 time_water = 0
+start_time = 0
+total_time = 0
 completeness = 0
+human_vics_saved_abs = 0
+agent_vics_saved_abs = 0
+agent_vics_saved_by_human_abs = 0
+human_vics_in_order = 0
+
+# PID	final_score	final_completeness	human_vics_saved_abs	human_vics_saved_rel	agent_vics_saved_abs	agent_vics_saved_rel	agent_vics_saved_by_human_abs	agent_vics_saved_by_human_rel	compliance = human_vics_saved/(human_vics_saved + agent_vics_saved_by_human)	water_time	game_time	human_vics_in_order	
 
 FOLDER_ID = ""
 PREFERENCES_CSV = ""
 ALLOCATION_CSV = ""
 ACTIONS_CSV = ""
+FINAL_CSV = ""
 
 agent_areas = []
 human_areas = []
 
-action_logs =  pd.DataFrame(columns = ["condition","PID","agent","tick","local_time","location","vic_area","in_own_area?","action","victim","vic_drop_loc","vic_order","score","completeness","water_time"])
-allocation_log = pd.DataFrame(columns = ["condition","PID","area","agent_assignment","change?"])
+action_logs =  pd.DataFrame(columns = ["condition","PID","agent_type","tick","local_time","location","vic_area","in_own_area?","action","victim","vic_drop_loc","vic_order","score","completeness","water_time"])
+allocation_log = pd.DataFrame(columns = ["condition","agent_type","PID","area","agent_assignment","change?"])
 
 def update_beep(beep_value):
     global beep_triggered
     beep_triggered = beep_value
+
+def log_final_output(participant_id, condition, agent_type):
+    # Column order
+    final_logs = pd.DataFrame([{
+        "PID": participant_id,
+        "condition": condition,
+        "agent_type": agent_type,
+        "final_score": total_score,
+        "final_completeness": completeness,
+        "human_vics_saved_abs": human_vics_saved_abs,
+        "human_vics_saved_rel": human_vics_saved_abs / (2.0*4), #number of victims times the areas
+        "agent_vics_saved_abs": agent_vics_saved_abs,
+        "agent_vics_saved_rel": agent_vics_saved_abs / (2.0*4),
+        "agent_vics_saved_by_human_abs": agent_vics_saved_by_human_abs,
+        "agent_vics_saved_by_human_rel": agent_vics_saved_by_human_abs / (2.0*4),
+        "compliance": human_vics_saved_abs/(human_vics_saved_abs + agent_vics_saved_by_human_abs),
+        "water_time": time_water,
+        "game_time": total_time,
+        "human_vics_in_order": human_vics_in_order
+    }])
+
+    if os.path.exists(FINAL_CSV):
+        # Append to the file without writing the header
+        final_logs.to_csv(FINAL_CSV, mode='a', header=False, index=False)
+    else:
+        final_logs.to_csv(FINAL_CSV, mode='w', header=True, index=False)
+
+
+
 
 # Serve static files from the 'images' directory
 @table_app.route('/images/<path:filename>')
@@ -49,7 +87,7 @@ def trigger_communication():
 @table_app.route('/check_communication', methods=['GET'])
 def check_communication():
     global pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered
-    print("check comm", pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered)
+    #print("check comm", pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered)
     return jsonify({"show_pref_table": pref_table_triggered,
                     "show_alloc_comm": alloc_comm_table_triggered,
                     "show_alloc_nocomm": alloc_nocomm_table_triggered}), 200
@@ -57,7 +95,7 @@ def check_communication():
 @table_app.route('/check_updates', methods=['GET'])
 def check_updates():
     global beep_triggered, total_score, time_water
-    print("check beep", beep_triggered)
+    #print("check beep", beep_triggered)
     return jsonify({"play_beep": beep_triggered, 
                     "total_score": total_score,
                     "time_water": time_water,
@@ -95,8 +133,8 @@ def update_preferences():
                 
                 preference_num = preference_map.get(preference, 0)  # Default to 0 if not found
                 writer.writerow([row_id, preference, preference_num])
-                print("endline",row_id, preference, preference_num)
-            print("end file")
+                #print("endline",row_id, preference, preference_num)
+            #print("end file")
 
         pref_table_triggered = False
         return jsonify({"status": "updated"}), 200
