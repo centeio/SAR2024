@@ -346,6 +346,13 @@ class HumanBrain(HumanAgentBrain):
             action_kwargs['drop_range'] = self.__drop_range
             action_kwargs['human_name'] = self.__name
 
+            obj_id = \
+                self.__select_random_obj_in_range(state,
+                                                  range_=self.__grab_range,
+                                                  property_to_check="is_movable")
+            if obj_id:
+                action_kwargs['object_id'] = None
+
             if self._last_victim != None:
                 # Check if victim dropped at its drop-off location
                 if self._last_victim['drop_location'] == self.current_location:
@@ -384,8 +391,8 @@ class HumanBrain(HumanAgentBrain):
                     else:
                         table_api.total_score += 2
 
-                if self._condition != "tutorial":
-                    self.log_action_df(state,"drop_victim",self._last_victim,all_previous_dropped)
+                    if self._condition != "tutorial":
+                        self.log_action_df(state,"drop_victim",self._last_victim,all_previous_dropped)
 
 
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:

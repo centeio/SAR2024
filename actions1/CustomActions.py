@@ -520,9 +520,14 @@ class Drop(Action):
         #other_human = world_state[{"name": kwargs['human_name']}]
         #other_agent_id = world_state[{"name": "RescueBot"}]['obj_id']
         #other_agent = grid_world.registered_agents[other_agent_id]
-        print("_is_possible")
+
+        print("_is_possible?")
+              
         # If no object id is given, the last item is dropped
         if 'object_id' in kwargs:
+            # If there is already an object in this space, drop not possible
+            if kwargs['object_id'] is None:
+                return DropObjectResult(DropObjectResult.RESULT_NO_OBJECT, False)
             obj_id = kwargs['object_id']
         elif len(reg_ag.is_carrying) > 0:
             obj_id = reg_ag.is_carrying[-1].obj_id

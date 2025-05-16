@@ -141,7 +141,7 @@ def build_tutorial(name, participant_id, folder, victims_per_area, areas):
     build_areas_w_victims(builder, victims_per_area, areas)
     build_sar_env(builder)
 
-    brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition="tutorial", name=name)
+    brain = HumanBrain(max_carry_objects=1, grab_range=0, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition="tutorial", name=name)
     builder.add_human_agent(location=(7,7), agent_brain=brain, team="Team", name=name, visualize_size=1.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
     return builder
@@ -158,7 +158,7 @@ def build_mission(name, condition, participant_id, agent_type, folder, victims_p
     table_api.agent_areas = agent_areas
     table_api.human_areas = [area for area in ALL_AREAS if area not in agent_areas]
 
-    brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition=condition, name=name, victim_order=victims, participant_id=participant_id, my_areas=table_api.human_areas)
+    brain = HumanBrain(max_carry_objects=1, grab_range=0, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition=condition, name=name, victim_order=victims, participant_id=participant_id, my_areas=table_api.human_areas)
     builder.add_human_agent(location=(7,8), agent_brain=brain, participant_id=participant_id, team="Team", name=name, visualize_size=1.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
     brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder)
