@@ -16,8 +16,10 @@ import pandas as pd
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--condition', dest='condition', required=True, choices={"tutorial", "mission_comm", "mission_nocomm", "pref_table"}, type=str, help='Add condition: tutorial, mission_comm, mission_nocomm, or pref_table')
-    parser.add_argument('--agent', dest='agent_type', required=False, default="tutorial",choices={"will","nowill"}, type=str, help="Add the agent type: tutorial, will or nowill.")
+    parser.add_argument('--agent_type', dest='agent_type', required=False, default="tutorial",choices={"will","nowill"}, type=str, help="Add the agent type: tutorial, will or nowill.")
     parser.add_argument('--pid', dest='pid', required=False, default="0", type=str, help='Add participant ID')
+    parser.add_argument('--agent_name', dest='agent_name', required=False, choices={"Argo","Bolt"}, default="Argo", type=str, help="Add agent's name: Argo or Bolt")
+
 
     args = parser.parse_args()
 
@@ -34,6 +36,8 @@ if __name__ == "__main__":
     table_api.pref_table_triggered = False
     table_api.alloc_comm_table_triggered = False
     table_api.alloc_nocomm_table_triggered = False
+
+    table_api.agent_name = args.agent_name
 
     table_api.FOLDER_ID = fld_name
     table_api.PREFERENCES_CSV = fld_name + "/preferences.csv"
@@ -54,7 +58,7 @@ if __name__ == "__main__":
         exit()
 
     table_api.start_time = time.time()
-    builder = create_builder(condition=args.condition, agent_type=args.agent_type, name=name, participant_id = args.pid, folder=fld_name)
+    builder = create_builder(condition=args.condition, agent_type=args.agent_type, agent_name=args.agent_name, name=name, participant_id = args.pid, folder=fld_name)
 
 
     # Start overarching MATRX scripts and threads, such as the api and/or visualizer if requested. Here we also link our own media resource folder with MATRX.

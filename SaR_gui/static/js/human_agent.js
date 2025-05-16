@@ -176,7 +176,7 @@ function showPrefTable() {
     toggle_pause(); // Pause the game when the overlay is shown
 }
 
-function showAlloc(comm) {
+function showAlloc(agent_name,comm) {
     fetch('http://localhost:5001/show_alloc', {
         method: 'POST',
         headers: {
@@ -196,8 +196,12 @@ function showAlloc(comm) {
 
         const overlayId = comm ? 'alloc_comm_overlay' : 'alloc_nocomm_overlay';
         const tableId = comm ? 'alloc_table_comm' : 'alloc_table_nocomm';
+        const introId = comm ? 'intro_comm' : 'intro_nocomm';
+        const intro = document.getElementById(introId);
         const table = document.getElementById(tableId);
 
+        intro.innerHTML = `Hi, I am ${agent_name} <img src="../../images/ambulance.svg" alt="icon ${agent_name}" style="width:20px; height:20px; vertical-align:middle;">. Happy to collaborate with you in this mission. I suggest we allocate our task like this.`;
+        
         const rows = table.querySelectorAll('tr[data-id]');
 
         rows.forEach(row => {
@@ -240,11 +244,11 @@ function checkCommunication() {
             };
             if (data.show_alloc_comm) {
                 console.log("show allocation table with comm")
-                showAlloc(true);
+                showAlloc(data.agent_name,true);
             }
             if (data.show_alloc_nocomm) {
                 console.log("show allocation table without comm")
-                showAlloc(false);
+                showAlloc(data.agent_name,false);
             }        
         })
         .catch(error => console.error('Error checking communication:', error));

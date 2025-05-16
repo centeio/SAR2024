@@ -24,6 +24,7 @@ human_vics_saved_abs = 0
 agent_vics_saved_abs = 0
 agent_vics_saved_by_human_abs = 0
 human_vics_in_order = 0
+agent_name = ""
 
 # PID	final_score	final_completeness	human_vics_saved_abs	human_vics_saved_rel	agent_vics_saved_abs	agent_vics_saved_rel	agent_vics_saved_by_human_abs	agent_vics_saved_by_human_rel	compliance = human_vics_saved/(human_vics_saved + agent_vics_saved_by_human)	water_time	game_time	human_vics_in_order	
 
@@ -86,11 +87,12 @@ def trigger_communication():
 
 @table_app.route('/check_communication', methods=['GET'])
 def check_communication():
-    global pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered
+    global pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered, agent_name
     #print("check comm", pref_table_triggered, alloc_comm_table_triggered, alloc_nocomm_table_triggered)
     return jsonify({"show_pref_table": pref_table_triggered,
                     "show_alloc_comm": alloc_comm_table_triggered,
-                    "show_alloc_nocomm": alloc_nocomm_table_triggered}), 200
+                    "show_alloc_nocomm": alloc_nocomm_table_triggered,
+                    "agent_name": agent_name}), 200
 
 @table_app.route('/check_updates', methods=['GET'])
 def check_updates():

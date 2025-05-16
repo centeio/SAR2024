@@ -146,7 +146,7 @@ def build_tutorial(name, participant_id, folder, victims_per_area, areas):
 
     return builder
 
-def build_mission(name, condition, participant_id, agent_type, folder, victims_per_area, areas):
+def build_mission(name, condition, participant_id, agent_type, agent_name, folder, victims_per_area, areas):
     goal = CollectionGoal(max_nr_ticks=np.inf)
 
     builder = WorldBuilder(shape=[20,20], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
@@ -161,8 +161,8 @@ def build_mission(name, condition, participant_id, agent_type, folder, victims_p
     brain = HumanBrain(max_carry_objects=1, grab_range=0, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition=condition, name=name, victim_order=victims, participant_id=participant_id, my_areas=table_api.human_areas)
     builder.add_human_agent(location=(7,8), agent_brain=brain, participant_id=participant_id, team="Team", name=name, visualize_size=1.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
-    brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder)
-    builder.add_agent((7,9), brain1, team="Team", name="RescueBot", visualize_size=1.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
+    brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name=agent_name, my_areas=agent_areas, victim_order=victims, folder=folder)
+    builder.add_agent((7,9), brain1, team="Team", name=agent_name, visualize_size=1.0, is_traversable=True, img_name="/images/" + agent_name + ".svg", score=0)
 
     return builder
 
@@ -224,7 +224,7 @@ def build_sar_env(builder):
     for loc in water:
         builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_opacity=0)
 
-def create_builder(condition, agent_type, name, participant_id, folder):
+def create_builder(condition, agent_type, name, participant_id, agent_name, folder):
     random.seed(random_seed)
     np.random.seed(random_seed)
 
@@ -252,6 +252,7 @@ def create_builder(condition, agent_type, name, participant_id, folder):
             condition=condition,
             participant_id=participant_id,
             agent_type=agent_type,
+            agent_name = agent_name,
             folder=folder,
             victims_per_area=victims_per_area_mission,
             areas=areas
