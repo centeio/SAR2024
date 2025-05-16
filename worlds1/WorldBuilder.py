@@ -45,10 +45,10 @@ key_action_map = {
 nr_areas = 8
 wall_color = "#464646"
 background_color = "#C2A9A1"
-background_image = "./images/background.png"
+background_image = "./images/background_20x20.png"
 pick_up_area_1_color = "#4b6473"
 pick_up_area_2_color = "#EDC001"
-drop_off_color = "#023020"
+drop_off_color = "#CEDDBB"
 object_size = 0.9
 victims_per_area_mission = 2
 victims_per_area_tutorial = 1
@@ -59,8 +59,8 @@ agent_sense_range = 2  # the range with which agents detect other agents. Do not
 object_sense_range = 1  # the range with which agents detect blocks. Do not change this value.
 other_sense_range = np.inf  # the range with which agents detect other objects (walls, doors, etc.). Do not change this value.
 fov_occlusion = True
-drop_width = 6
-drop_height = 6
+drop_width = 4
+drop_height = 4
 
 ALL_AREAS = ["A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2"]
 
@@ -116,74 +116,55 @@ def pick_agent_areas(agent_type):
     return my_areas
 
 
-# Add the drop zones to the world
 def add_drop_off_zones(builder, task_type):
     if task_type == "mission":
         nr_drop_zones = 1
         for nr_zone in range(nr_drop_zones):
-            builder.add_area((16,9), width=3, height=2, name=f"Drop off {nr_zone}", visualize_opacity=0.3, visualize_colour=drop_off_color, drop_zone_nr=nr_zone, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
+            builder.add_area((8,4), width=2, height=2, name=f"Drop off {nr_zone}", visualize_opacity=0.3, visualize_colour=drop_off_color, drop_zone_nr=nr_zone, is_drop_zone=True, is_goal_block=False, is_collectable=False)
 
-
-# Add the agents to the world
 def add_agents_simulation(builder, condition, task_type, name, folder, victims):
-
     for team in range(nr_teams):
         team_name = f"Team {team}"
-        # Add the artificial agents based on condition
         nr_agents = agents_per_team - human_agents_per_team
-        brain1 = BaselineAgent(slowdown=1, condition=condition, human_name=name,agent_name="RescueBot", my_areas=["C1","C2","D1","D2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
-        loc = (20,20)
-        builder.add_agent(loc, brain1, team=team_name, name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
-        brain2 = BaselineAgent(slowdown=1, condition=condition, human_name=name,agent_name="Helper", my_areas=["A1","A2","B1","B2"], victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
-        loc = (21,21)
-        builder.add_agent(loc, brain2, team=team_name, name="Helper", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
+        brain1 = BaselineAgent(slowdown=1, condition=condition, human_name=name,agent_name="RescueBot", my_areas=["C1","C2","D1","D2"], victim_order=victims, folder=folder)
+        builder.add_agent((10,10), brain1, team=team_name, name="RescueBot", visualize_size=1.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
+        brain2 = BaselineAgent(slowdown=1, condition=condition, human_name=name,agent_name="Helper", my_areas=["A1","A2","B1","B2"], victim_order=victims, folder=folder)
+        builder.add_agent((10,11), brain2, team=team_name, name="Helper", visualize_size=1.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
-# Create the world for tutorial
 def build_tutorial(name, participant_id, folder, victims_per_area, areas):
     goal = CollectionGoal(max_nr_ticks=np.inf)
 
-    builder = WorldBuilder(shape=[40,40], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
+    builder = WorldBuilder(shape=[20,20], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
 
     build_areas_w_victims(builder, victims_per_area, areas)
     build_sar_env(builder)
 
     brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition="tutorial", name=name)
-    loc = (18,22)
-    builder.add_human_agent(location=loc, agent_brain=brain, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
+    builder.add_human_agent(location=(7,7), agent_brain=brain, team="Team", name=name, visualize_size=1.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
     return builder
-
 
 def build_mission(name, condition, participant_id, agent_type, folder, victims_per_area, areas):
     goal = CollectionGoal(max_nr_ticks=np.inf)
 
-    builder = WorldBuilder(shape=[40,40], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
+    builder = WorldBuilder(shape=[20,20], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
 
     victims = build_areas_w_victims(builder, victims_per_area, areas)
     build_sar_env(builder)
 
     agent_areas = pick_agent_areas(agent_type)
     table_api.agent_areas = agent_areas
-    # After assigning `my_areas` to the agent:
     table_api.human_areas = [area for area in ALL_AREAS if area not in agent_areas]
 
-
     brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition=condition, name=name, victim_order=victims, participant_id=participant_id, my_areas=table_api.human_areas)
-    loc = (18,22)
-    builder.add_human_agent(location=loc, agent_brain=brain, participant_id=participant_id, team="Team", name=name, visualize_size=2.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
+    builder.add_human_agent(location=(7,8), agent_brain=brain, participant_id=participant_id, team="Team", name=name, visualize_size=1.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
-    if condition == "mission_comm": 
-        brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
-    elif condition == "mission_nocomm":
-        brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder) # Slowdown makes the agent a bit slower, do not change value during evaluations
-    loc = (20,20)
-    builder.add_agent(loc, brain1, team="Team", name="RescueBot", visualize_size=2.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
-
+    brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name="RescueBot", my_areas=agent_areas, victim_order=victims, folder=folder)
+    builder.add_agent((7,9), brain1, team="Team", name="RescueBot", visualize_size=1.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
     return builder
-
 
 def build_areas_w_victims(builder, victims_per_area, areas):
     n_areas = len(areas)
@@ -192,87 +173,92 @@ def build_areas_w_victims(builder, victims_per_area, areas):
     order_victims = list(range(1,n_victims + 1))
     random.shuffle(order_victims)
 
-    builder.add_room(top_left_location=(0, 0), width=40, height=40, name="world_bounds", wall_visualize_colour=None)
+    builder.add_room(top_left_location=(0, 0), width=20, height=20, name="world_bounds", wall_visualize_colour=None)
 
     v1 = 0
 
-    # Add the areas and victims to each area
     for area_name, area_data in areas.items():
-        builder.add_area(area_data["top_left"], width=area_data["width"], height=area_data["height"], name=area_name, visualize_opacity=0.5, visualize_colour=area_data["color"], is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        top_left = (area_data["top_left"][0], area_data["top_left"][1])
+        width = area_data["width"]
+        height = area_data["height"]
+        builder.add_area(top_left, width=width, height=height, name=area_name, visualize_opacity=0.5, visualize_colour=area_data["color"], is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
-        # Pick x and y locations for victims in an area
-        loc_victim_x = random.sample(range(area_data["top_left"][0], area_data["top_left"][0] + area_data["width"]), victims_per_area)
-        loc_victim_y = random.sample(range(area_data["top_left"][1], area_data["top_left"][1] + area_data["height"]), victims_per_area)
-
+        loc_victim_x = random.sample(range(top_left[0], top_left[0] + width), victims_per_area)
+        loc_victim_y = random.sample(range(top_left[1], top_left[1] + height), victims_per_area)
 
         for v2 in range(victims_per_area):
             victim = order_victims[v1]
-            #print(victim)
-            drop_x = 17 + ((victim-1) % drop_width)
-            drop_y = 17 + ((victim-1) // drop_width)
-            #print(drop_x, drop_y)
-            victims[victim - 1] = {"location": (loc_victim_x[v2],loc_victim_y[v2]), "name": "victim_"+str(victim)+"_", "area": area_name, "order": victim, "drop_location": (drop_x, drop_y)}
-            builder.add_object(location=(loc_victim_x[v2],loc_victim_y[v2]),name="victim_"+str(victim)+"_", callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(victim)+".svg")
-
-            builder.add_object((drop_x,drop_y), "drop_off_"+str(victim)+"_", callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(victim)+".svg", drop_zone_nr=1)
-            
+            drop_x = 8 + ((victim-1) % (drop_width))
+            drop_y = 8 + ((victim-1) // (drop_height))
+            victims[victim - 1] = {"location": (loc_victim_x[v2], loc_victim_y[v2]), "name": "victim_"+str(victim)+"_", "area": area_name, "order": victim, "drop_location": (drop_x, drop_y)}
+            builder.add_object((loc_victim_x[v2], loc_victim_y[v2]),"victim_"+str(victim)+"_", callable_class=CollectableBlock, visualize_shape='img',img_name="/images/victims/v"+str(victim)+".png")
+            builder.add_object((drop_x, drop_y), "drop_off_"+str(victim)+"_", callable_class=GhostBlock, visualize_shape='img',img_name="/images/victims/v"+str(victim)+".png", drop_zone_nr=1)
             v1 += 1
 
     return victims
 
 def build_sar_env(builder):
+    builder.add_area((8,8), width=drop_width, height=drop_height, name="Drop off", visualize_opacity=0.0, visualize_colour=drop_off_color, drop_zone_nr=1, is_drop_zone=True, is_goal_block=False, is_collectable=False)
 
-        # Add the drop off zones
+    builder.add_object((14,2),'heli',EnvObject,is_traversable=False,is_movable=False,visualize_shape='img',img_name="/images/helicopter.svg", visualize_size=2)
+    builder.add_object((6,11),'ambulance',EnvObject,is_traversable=False,is_movable=False,visualize_shape='img',img_name="/images/ambulance.svg", visualize_size=2)
 
-        builder.add_area((17,17), width=drop_width, height=drop_height, name="Drop off", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=1, is_drop_zone=True, is_goal_block=False, is_collectable=False) 
-
-        # Add decorative objects
-        builder.add_object((23,15),'heli',EnvObject,is_traversable=False,is_movable=False,visualize_shape='img',img_name="/images/helicopter.svg", visualize_size=4) 
-        builder.add_object((15,23),'ambulance',EnvObject,is_traversable=False,is_movable=False,visualize_shape='img',img_name="/images/ambulance.svg", visualize_size=3) 
-
-    # Create folders where the logs are stored during the official condition
-        # current_exp_folder = datetime.now().strftime("exp_"+condition+"_at_time_%Hh-%Mm-%Ss_date_%dd-%mm-%Yy")
-        # logger_save_folder = os.path.join("logs", current_exp_folder)
-        # builder.add_logger(ActionLoggerV2, log_strategy=1, save_path=logger_save_folder, file_name_prefix="actions_")
-        
-    # Add water area
-        water = [(x, y) for x in range(29, 40) for y in range(6, 14)] + [(x, y) for x in range(27, 40) for y in range(14, 21)] + \
-                [(x, y) for x in range(24, 40) for y in range(21, 23)] + [(x, y) for x in range(21, 40) for y in range(23, 25)] + \
-                [(x, y) for x in range(16, 40) for y in range(25, 27)] + [(x, y) for x in range(14, 40) for y in range(27, 30)] + \
-                [(x, y) for x in range(10, 40) for y in range(30, 35)] + [(x, y) for x in range(8, 40) for y in range(35, 40)]    
-                # [(x,y) for x in list(range(2,6)) for y in list(range(15,18))] + [(x,y) for x in list(range(14,18)) for y in list(range(15,18))] + \
-                # [(6,16),(6,17),(13,16),(13,17)] + + [(x,13) for x in list(range(2,4))] + [(x,13) for x in list(range(16,18))]
-        
-        #print(water)
-        for loc in water:
-            builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_opacity=0)
+    water = [(4, 17), (4, 18), (4, 19), 
+             (5, 15), (5, 16), (5, 17), (5, 18), (5, 19), 
+             (6, 15), (6, 16), (6, 17), (6, 18), (6, 19), 
+             (7, 13), (7, 14), (7, 15), (7, 16), (7, 17), (7, 18), (7, 19), 
+             (8, 13), (8, 14), (8, 15), (8, 16), (8, 17), (8, 18), (8, 19), 
+             (9, 13), (9, 14), (9, 15), (9, 16), (9, 17), (9, 18), (9, 19), 
+             (10, 13), (10, 14), (10, 15), (10, 16), (10, 17), (10, 18), (10, 19), 
+             (11, 13), (11, 14), (11, 15), (11, 16), (11, 17), (11, 18), (11, 19), 
+              (12, 12), (12, 13), (12, 14), (12, 15), (12, 16), (12, 17), (12, 18), (12, 19), 
+             (13, 7), (13, 8), (13, 9), (13, 10), (13, 11), (13, 12), (13, 13), (13, 14), (13, 15), (13, 16), (13, 17), (13, 18), (13, 19), 
+             (14, 3), (14, 4), (14, 5), (14, 6), (14, 7), (14, 8), (14, 9), (14, 10), (14, 11), (14, 12), (14, 13), (14, 14), (14, 15), (14, 16), (14, 17), (14, 18), (14, 19), 
+             (15, 3), (15, 4), (15, 5), (15, 6), (15, 7), (15, 8), (15, 9), (15, 10), (15, 11), (15, 12), (15, 13), (15, 14), (15, 15), (15, 16), (15, 17), (15, 18), (15, 19), 
+             (16, 3), (16, 4), (16, 5), (16, 6), (16, 7), (16, 8), (16, 9), (16, 10), (16, 11), (16, 12), (16, 13), (16, 14), (16, 15), (16, 16), (16, 17), (16, 18), (16, 19), 
+             (17, 3), (17, 4), (17, 5), (17, 6), (17, 7), (17, 8), (17, 9), (17, 10), (17, 11), (17, 12), (17, 13), (17, 14), (17, 15), (17, 16), (17, 17), (17, 18), (17, 19), 
+             (18, 3), (18, 4), (18, 5), (18, 6), (18, 7), (18, 8), (18, 9), (18, 10), (18, 11), (18, 12), (18, 13), (18, 14), (18, 15), (18, 16), (18, 17), (18, 18), (18, 19), 
+             (19, 3), (19, 4), (19, 5), (19, 6), (19, 7), (19, 8), (19, 9), (19, 10), (19, 11), (19, 12), (19, 13), (19, 14), (19, 15), (19, 16), (19, 17), (19, 18), (19, 19)]
 
 
+    for loc in water:
+        builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_opacity=0)
 
-# Create the world
 def create_builder(condition, agent_type, name, participant_id, folder):
     random.seed(random_seed)
-    # Set numpy's random generator
     np.random.seed(random_seed)
 
-    areas = {"A1": {"top_left": (14,8), "width": 12, "height": 5, "color": pick_up_area_1_color}, "A2": {"top_left": (14,2), "width": 12, "height": 5, "color": pick_up_area_2_color},
-                "B1": {"top_left": (27,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "B2": {"top_left": (33,14), "width": 5, "height": 12, "color": pick_up_area_2_color},
-                "C1": {"top_left": (14,27), "width": 12, "height": 5, "color": pick_up_area_1_color}, "C2": {"top_left": (14,33), "width": 12, "height": 5, "color": pick_up_area_2_color},
-                "D1": {"top_left": (8,14), "width": 5, "height": 12, "color": pick_up_area_1_color}, "D2": {"top_left": (2,14), "width": 5, "height": 12, "color": pick_up_area_2_color}}
+    areas = {
+        "A1": {"top_left": (7, 3), "width": 6, "height": 2, "color": pick_up_area_1_color},
+        "A2": {"top_left": (7, 1), "width": 6, "height": 2, "color": pick_up_area_2_color},
+        "B1": {"top_left": (15, 7), "width": 2, "height": 6, "color": pick_up_area_1_color},
+        "B2": {"top_left": (17, 7), "width": 2, "height": 6, "color": pick_up_area_2_color},
+        "C1": {"top_left": (7, 15), "width": 6, "height": 2, "color": pick_up_area_1_color},
+        "C2": {"top_left": (7, 17), "width": 6, "height": 2, "color": pick_up_area_2_color},
+        "D1": {"top_left": (3, 7), "width": 2, "height": 6, "color": pick_up_area_1_color},
+        "D2": {"top_left": (1, 7), "width": 2, "height": 6, "color": pick_up_area_2_color}
+    }
 
-    if condition== "tutorial":
+    if condition == "tutorial":
         with open(table_api.PREFERENCES_CSV, mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["pref_id", "preference", "preference_num"])
         
         builder = build_tutorial(name, participant_id, folder, victims_per_area_tutorial, areas)
 
-    # Create the world builder
-    if condition=="mission_nocomm" or condition=="mission_comm":
-        builder = build_mission(name=name, condition=condition, participant_id=participant_id, agent_type=agent_type, folder=folder, victims_per_area=victims_per_area_mission, areas=areas)
-
+    elif condition in ["mission_comm", "mission_nocomm"]:
+        builder = build_mission(
+            name=name,
+            condition=condition,
+            participant_id=participant_id,
+            agent_type=agent_type,
+            folder=folder,
+            victims_per_area=victims_per_area_mission,
+            areas=areas
+        )
 
     return builder
+
 
 class CollectableBlock(EnvObject):
     '''
