@@ -29,9 +29,12 @@
     <div class="overlay" id="pref_overlay">
       <div>
           <div>
-              <h2>Willingness Table</h2>
-              <p>Please indicate your willingness (i.e., <i>the quality of being happy to do something if it is needed</i>) to do each of the tasks from 1 (Very NOT willing) to 6 (Very willing):</p>
-              <div align="center">
+              <h2 class="teal-background">Willingness Table</h2>
+              <div class="teal-background-block">
+                <p>Please indicate your willingness (i.e., <i>the quality of being happy to do something if it is needed</i>)</p>
+                <p>to do each of the tasks from 1 (Very NOT willing) to 6 (Very willing):</p>
+              </div>
+              <div class="table" align="center">
                 <table id="pref_table">
                   <tr>
                       <th>Task</th>
@@ -138,7 +141,7 @@
                     </td>
                   </tr>
                 </table>
-                <button type="button" class="table_btn" id="close_pref_table_btn">Submit info and close</button>
+                <button type="button" class="teal-button" id="close_pref_table_btn">Submit info and close</button>
               </div>
            </div>
       </div>
@@ -149,12 +152,14 @@
     <div class="overlay" id="alloc_comm_overlay">
       <div>
           <div>
-              <h3>Task Allocation Table</h3>
-              <p>Happy to collaborate with you in this mission. I suggest we allocate our task like this.</p>
-              <p>Please only edit the allocation if you are not satisfied with my suggestion.</p>
-              <p>Each of us should have four tasks assigned</p>
+              <h3 class="teal-background-block">Task Allocation Table</h3>
+              <div class="teal-background-block">
+                <p>Happy to collaborate with you in this mission. I suggest we allocate our task like this.</p>
+                <p>Please only edit the allocation if you are not satisfied with my suggestion.</p>
+                <p>Each of us should have four tasks assigned.</p>
+                </div>
               <div align="center">
-                <table id="alloc_table_comm">
+                <table class = "table" id="alloc_table_comm">
                   <tr>
                       <th>Task</th>
                       <th>Who should do it</th>
@@ -264,7 +269,7 @@
                     </td>
                   </tr>
                 </table>
-                <button type="button" class="table_btn" id="close_alloc_comm_btn">Close table and start mission.</button>
+                <button type="button" class="teal-button" id="close_alloc_comm_btn">Close table and start mission.</button>
               </div>
            </div>
       </div>
@@ -275,8 +280,9 @@
     <div class="overlay" id="alloc_nocomm_overlay">
       <div>
           <div>
-              <h3>Task Allocation</h3>
-              <p>Happy to collaborate with you in this mission. I suggest we allocate our task like this.</p>
+              <h3 class="teal-background">Task Allocation</h3>
+              <p></p>
+              <p class="teal-background-block">Happy to collaborate with you in this mission. I suggest we allocate our task like this.</p>
               <div align="center">
                 <table id="alloc_table_nocomm">
                   <tr>
@@ -316,7 +322,7 @@
                     <td> Teammate </td>
                   </tr>
                 </table>
-                <button type="button" class="table_btn" id="close_alloc_nocomm_btn">Submit info and start mission</button>
+                <button type="button" class="teal-button" id="close_alloc_nocomm_btn">Submit info and start mission</button>
               </div>
            </div>
       </div>

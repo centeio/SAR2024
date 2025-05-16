@@ -360,19 +360,23 @@ h5 {
 
 .overlay th, td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 4px;
   text-align: center;
   width: 35vh;
 }
 
-.overlay tr{
+.overlay th{
   background-color: cadetblue;
   color: white;
-  text-transform: uppercase;
+}
+
+.overlay td{
+  background-color: white ;
+  color: #004d40;
 }
 
 .overlay select {
-  padding: 8px;
+  padding: 4px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #f1f1f1;
@@ -390,4 +394,49 @@ h5 {
 .overlay select:focus {
   border-color: #214974;
   box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+}
+
+.teal-background {
+  display: inline;
+  background-color: #b2dfdb; /* light teal */
+  color: #004d40;            /* darker teal for text */
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.teal-background-block {
+  background-color: #b2dfdb; /* light teal */
+  color: #004d40;            /* darker teal for text */
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.teal-background-block p {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.table {
+  padding: 8px 12px;
+  margin: 8px 8px;
+}
+
+.teal-button {
+  background-color: #b2dfdb;
+  color: #800020;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+  margin-top: 12px;
+}
+
+.teal-button:hover {
+  background-color: #80cbc4;
 }
