@@ -280,13 +280,15 @@ function checkUpdates() {
             const waterTimeDiv = document.getElementById('water_time');
             if (waterTimeDiv) {
                 waterTimeDiv.textContent = `Time in water: ${formattedTime}`;
+                waterTimeDiv.style.color = 'red';
             }
 
             // Update tasks (human_areas)
             const tasksDiv = document.getElementById('tasks');
-            if (tasksDiv && Array.isArray(data.human_areas)) {
+            if (tasksDiv && Array.isArray(data.human_areas) && data.human_areas.length > 0) {
                 const taskList = data.human_areas.join(', ');
                 tasksDiv.textContent = `Human tasks: ${taskList}`;
+                tasksDiv.style.display = 'block';
             }
 
         })
