@@ -196,11 +196,11 @@ function showAlloc(agent_name,comm) {
 
         const overlayId = comm ? 'alloc_comm_overlay' : 'alloc_nocomm_overlay';
         const tableId = comm ? 'alloc_table_comm' : 'alloc_table_nocomm';
-        const introId = comm ? 'intro_comm' : 'intro_nocomm';
+        const introId = 'intro_comm'
         const intro = document.getElementById(introId);
         const table = document.getElementById(tableId);
 
-        intro.innerHTML = `Hi, I am ${agent_name} <img src="../../images/ambulance.svg" alt="icon ${agent_name}" style="width:20px; height:20px; vertical-align:middle;">. Happy to collaborate with you in this mission. I suggest we allocate our task like this.`;
+        intro.innerHTML = `Hi, I am ${agent_name} <img src="../fetch_external_media/images/${agent_name}.svg" alt="icon ${agent_name}" style="width:20px; height:20px; vertical-align:middle;">. Happy to collaborate with you in this mission. I suggest we allocate our task like this.`;
         
         const rows = table.querySelectorAll('tr[data-id]');
 
