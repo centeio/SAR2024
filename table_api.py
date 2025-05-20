@@ -44,12 +44,13 @@ def update_beep(beep_value):
     global beep_triggered
     beep_triggered = beep_value
 
-def log_final_output(participant_id, condition, agent_type):
+def log_final_output(participant_id, condition, agent_type, agent_name):
     # Column order
     final_logs = pd.DataFrame([{
         "PID": participant_id,
         "condition": condition,
         "agent_type": agent_type,
+        "agent_name": agent_name,
         "final_score": total_score,
         "final_completeness": completeness,
         "human_vics_saved_abs": human_vics_saved_abs,

@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 table_api.action_logs.to_csv(table_api.ACTIONS_CSV, mode='w', header=True, index=False)
         
             # LOG FINAL
-            table_api.log_final_output(participant_id = args.pid, condition=args.condition, agent_type=args.agent_type)
+            table_api.log_final_output(participant_id = args.pid, condition=args.condition, agent_type=args.agent_type, agent_name = args.agent_name)
     
     except Exception as e:
         print(f"Error while logging: {e}")

@@ -17,7 +17,7 @@ import time
 class HumanBrain(HumanAgentBrain):
     """ Creates an Human Agent which is an agent that can be controlled by a human.
     """
-    def __init__(self, memorize_for_ticks=None, fov_occlusion=False, max_carry_objects=1, grab_range=1, drop_range=1, door_range=1, remove_range=1, condition='mission_nocomm', name='human',participant_id="000", victim_order={}, my_areas = []):
+    def __init__(self, memorize_for_ticks=None, fov_occlusion=False, max_carry_objects=1, grab_range=1, drop_range=1, door_range=1, remove_range=1, condition='mission_nocomm', name='human', agent_name="none", participant_id="000", victim_order={}, my_areas = []):
         super().__init__(memorize_for_ticks=memorize_for_ticks)
         self.__fov_occlusion = fov_occlusion
         if fov_occlusion:
@@ -33,6 +33,7 @@ class HumanBrain(HumanAgentBrain):
         self.__strength = 'normal'
         self._participant_id = participant_id
         self._condition =  condition
+        self._agent_name = agent_name
         self._my_areas = my_areas
         self._goal_vics = victim_order
         self.water_locs = None
@@ -48,6 +49,7 @@ class HumanBrain(HumanAgentBrain):
             "condition": self._condition,
             "PID": self._participant_id,
             "agent_type": "human",
+            "agent_name": self._agent_name,
             "tick": state['World']['nr_ticks'],
             "local_time": int(time.time()),
             "location": self.current_location,
