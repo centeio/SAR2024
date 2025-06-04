@@ -80,40 +80,42 @@ def pick_agent_areas(agent_type):
         if close_pref > far_pref:
             if dry_pref > water_pref:
                 if close_pref >= dry_pref:
-                    my_areas = ["A1", "B1", "C1", "D1"]
+                    human_areas = ["A1", "B1", "C1", "D1"]
                 else:
-                    my_areas = ["A1", "A2", "D1", "D2"]
+                    human_areas = ["A1", "A2", "D1", "D2"]
             elif water_pref > dry_pref:
                 if close_pref >= water_pref:
-                    my_areas = ["A1", "B1", "C1", "D1"]
+                    human_areas = ["A1", "B1", "C1", "D1"]
                 else:
-                    my_areas = ["B1", "B2", "C1", "C2"]
+                    human_areas = ["B1", "B2", "C1", "C2"]
             else:  # No soil preference
-                my_areas = ["A1", "B1", "C1", "D1"]
+                human_areas = ["A1", "B1", "C1", "D1"]
 
         elif far_pref > close_pref:
             if dry_pref > water_pref:
                 if far_pref >= dry_pref:
-                    my_areas = ["A2", "B2", "C2", "D2"]
+                    human_areas = ["A2", "B2", "C2", "D2"]
                 else:
-                    my_areas = ["A1", "A2", "D1", "D2"]
+                    human_areas = ["A1", "A2", "D1", "D2"]
             elif water_pref > dry_pref:
                 if far_pref >= water_pref:
-                    my_areas = ["A2", "B2", "C2", "D2"]
+                    human_areas = ["A2", "B2", "C2", "D2"]
                 else:
-                    my_areas = ["B1", "B2", "C1", "C2"]
+                    human_areas = ["B1", "B2", "C1", "C2"]
             else:  # No soil preference
-                my_areas = ["A2", "B2", "C2", "D2"]
+                human_areas = ["A2", "B2", "C2", "D2"]
 
         else:  # No distance preference
-            my_areas = ["A1", "A2", "B1", "B2"]
+            human_areas = ["A1", "A2", "B1", "B2"]
 
-        print("Selected tasks:", my_areas)
+        print("Selected tasks for human:", human_areas)
     
     else:
-        my_areas = ["A1", "A2", "B1", "B2"]
+        human_areas = ["A1", "A2", "B1", "B2"]
 
-    return my_areas
+    agent_areas = [area for area in ALL_AREAS if area not in human_areas]
+
+    return agent_areas, human_areas
 
 
 def add_drop_off_zones(builder, task_type):
@@ -138,10 +140,10 @@ def build_tutorial(name, participant_id, folder, victims_per_area, areas):
 
     builder = WorldBuilder(shape=[20,20], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
 
-    build_areas_w_victims(builder, victims_per_area, areas)
+    victims = build_areas_w_victims(builder, victims_per_area, areas)
     build_sar_env(builder)
 
-    brain = HumanBrain(max_carry_objects=1, grab_range=0, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition="tutorial", name=name)
+    brain = HumanBrain(max_carry_objects=1, grab_range=0, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition="tutorial", name=name, victim_order=victims)
     builder.add_human_agent(location=(7,7), agent_brain=brain, team="Team", name=name, visualize_size=1.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
     return builder
@@ -154,14 +156,12 @@ def build_mission(name, condition, participant_id, agent_type, agent_name, folde
     victims = build_areas_w_victims(builder, victims_per_area, areas)
     build_sar_env(builder)
 
-    agent_areas = pick_agent_areas(agent_type)
-    table_api.agent_areas = agent_areas
-    table_api.human_areas = [area for area in ALL_AREAS if area not in agent_areas]
+    table_api.agent_areas, table_api.human_areas = pick_agent_areas(agent_type)
 
     brain = HumanBrain(max_carry_objects=1, grab_range=0, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion, condition=condition, name=name, victim_order=victims, participant_id=participant_id, agent_name = agent_name,my_areas=table_api.human_areas)
     builder.add_human_agent(location=(7,8), agent_brain=brain, participant_id=participant_id, team="Team", name=name, visualize_size=1.0, key_action_map=key_action_map, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True)
 
-    brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name=agent_name, my_areas=agent_areas, victim_order=victims, folder=folder)
+    brain1 = BaselineAgent(slowdown=1, condition=condition, participant_id=participant_id, agent_type=agent_type, human_name=name,agent_name=agent_name, my_areas=table_api.agent_areas, victim_order=victims, folder=folder)
     builder.add_agent((7,9), brain1, team="Team", name=agent_name, visualize_size=1.0, is_traversable=True, img_name="/images/" + agent_name + ".svg", score=0)
 
     return builder
@@ -225,8 +225,8 @@ def build_sar_env(builder):
         builder.add_object(loc,'water', EnvObject,is_traversable=True, is_movable=False, area_visualize_colour='#0008ff', visualize_opacity=0)
 
 def create_builder(condition, agent_type, name, participant_id, agent_name, folder):
-    random.seed(random_seed)
-    np.random.seed(random_seed)
+    #random.seed(random_seed)
+    #np.random.seed(random_seed)
 
     areas = {
         "A1": {"top_left": (7, 3), "width": 6, "height": 2, "color": pick_up_area_1_color},
@@ -352,6 +352,7 @@ class CollectionGoal(WorldGoal):
 
         # Completion: all goal victims have been dropped correctly
         coll_count = table_api.human_vics_saved_abs + table_api.agent_vics_saved_abs + table_api.agent_vics_saved_by_human_abs
+        #print("coll_count", coll_count, "goal vics length", len(self.__goal_vics))
         is_satisfied = (coll_count == len(self.__goal_vics))
         progress = coll_count / len(self.__goal_vics)
         #print(coll_count,progress,len(self.__goal_vics))

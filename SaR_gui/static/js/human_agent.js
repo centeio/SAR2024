@@ -143,6 +143,29 @@ function close_pref_table() {
     const table = document.getElementById("pref_table");
     const dropdowns = table.querySelectorAll("select");
 
+    // Find or create the error message div right below the table
+    let errorMsg = document.getElementById("pref_error_msg");
+    if (!errorMsg) {
+        errorMsg = document.createElement("div");
+        errorMsg.id = "pref_error_msg";
+        errorMsg.style.color = "red";
+        errorMsg.style.marginTop = "10px";
+        errorMsg.style.textAlign = "center";
+        table.parentNode.insertBefore(errorMsg, table.nextSibling);
+    }
+
+    // Check if all dropdowns have a valid selection
+    for (let dropdown of dropdowns) {
+        if (dropdown.value === "") {
+            errorMsg.textContent = "Please select an option for every preference.";
+            return;  // stop execution, don't close the overlay
+        }
+    }
+
+    // Clear error message if everything is selected
+    errorMsg.textContent = "";
+
+
     let preferences = [];
     dropdowns.forEach(dropdown => {
         let row = dropdown.closest("tr");
@@ -161,7 +184,8 @@ function close_pref_table() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'updated') {
-            document.getElementById('pref_overlay').style.display = 'none';
+            errorMsg.style.color = "green";
+            errorMsg.textContent = "Preferences submitted.";
             console.log("preferences updated")
             toggle_start(); // Start or resume the game when the overlay is hidden
         } else {
@@ -196,7 +220,7 @@ function showAlloc(agent_name,comm) {
 
         const overlayId = comm ? 'alloc_comm_overlay' : 'alloc_nocomm_overlay';
         const tableId = comm ? 'alloc_table_comm' : 'alloc_table_nocomm';
-        const introId = 'intro_comm'
+        const introId = comm ? 'intro_comm' : 'intro_nocomm';
         const intro = document.getElementById(introId);
         const table = document.getElementById(tableId);
 

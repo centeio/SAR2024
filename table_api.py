@@ -139,7 +139,7 @@ def update_preferences():
                 #print("endline",row_id, preference, preference_num)
             #print("end file")
 
-        pref_table_triggered = False
+        # pref_table_triggered = False
         return jsonify({"status": "updated"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -153,6 +153,11 @@ def show_alloc():
     if agent_areas:
         for area in agent_areas:
             allocation[f"p_{area}"] = "Artificial Agent"
+
+    # Populate allocation from human_areas (if any)
+    if human_areas:
+        for area in human_areas:
+            allocation[f"p_{area}"] = "Human Teammate"
 
     return jsonify({"alloc": allocation})
     

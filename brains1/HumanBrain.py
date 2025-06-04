@@ -325,6 +325,7 @@ class HumanBrain(HumanAgentBrain):
                 self.__select_random_obj_in_range(state,
                                                   range_=self.__grab_range,
                                                   property_to_check="is_movable")
+
             if obj_id:
                 action_kwargs['object_id'] = obj_id
                 obj = state[obj_id]
@@ -335,6 +336,7 @@ class HumanBrain(HumanAgentBrain):
                     (v for v in self._goal_vics if v['name'] == obj_name),
                     None
                 )
+
                 if self._condition != "tutorial":
                     self.log_action_df(state,"take_victim",self._last_victim)
             action_kwargs['action_type'] = 'alone'
@@ -355,11 +357,11 @@ class HumanBrain(HumanAgentBrain):
             if obj_id:
                 action_kwargs['object_id'] = None
 
-            if self._last_victim != None:
+            elif self._last_victim != None:
                 # Check if victim dropped at its drop-off location
                 if self._last_victim['drop_location'] == self.current_location:
                     # Check whether it is this player's job to drop this victim
-                    if self._last_victim["area"] in self._my_areas:
+                    if self._last_victim["area"] in self._my_areas or self._condition == "tutorial":
                         table_api.human_vics_saved_abs += 1
                     else:
                         table_api.agent_vics_saved_by_human_abs += 1
@@ -400,7 +402,7 @@ class HumanBrain(HumanAgentBrain):
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:
             if in_water:
                 action == Idle.__name__
-                action_kwargs['action_duration'] = 5
+                action_kwargs['action_duration'] = 8
 
 
         return action, action_kwargs
