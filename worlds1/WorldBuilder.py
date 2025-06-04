@@ -136,7 +136,7 @@ def add_agents_simulation(builder, condition, task_type, name, folder, victims):
         builder.add_agent((10,11), brain2, team=team_name, name="Helper", visualize_size=1.0, is_traversable=True, img_name="/images/robot-final4.svg", score=0)
 
 def build_tutorial(name, participant_id, folder, victims_per_area, areas):
-    goal = CollectionGoal(max_nr_ticks=np.inf)
+    goal = CollectionGoal(max_nr_ticks=3000)
 
     builder = WorldBuilder(shape=[20,20], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
 
@@ -149,7 +149,7 @@ def build_tutorial(name, participant_id, folder, victims_per_area, areas):
     return builder
 
 def build_mission(name, condition, participant_id, agent_type, agent_name, folder, victims_per_area, areas):
-    goal = CollectionGoal(max_nr_ticks=np.inf)
+    goal = CollectionGoal(max_nr_ticks=3000)
 
     builder = WorldBuilder(shape=[20,20], tick_duration=tick_duration, run_matrx_api=True, run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal,visualization_bg_img=background_image)
 
