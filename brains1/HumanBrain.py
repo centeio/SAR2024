@@ -327,7 +327,6 @@ class HumanBrain(HumanAgentBrain):
                                                   property_to_check="is_movable")
 
             if obj_id:
-                action_kwargs['object_id'] = obj_id
                 obj = state[obj_id]
                 obj_name = obj.get('name')
 
@@ -337,9 +336,16 @@ class HumanBrain(HumanAgentBrain):
                     None
                 )
 
-                if self._condition != "tutorial":
-                    self.log_action_df(state,"take_victim",self._last_victim)
-            action_kwargs['action_type'] = 'alone'
+                if self._last_victim['drop_location'] == self.current_location:
+                    action_kwargs['object_id'] = None
+
+                else:
+                    action_kwargs['object_id'] = obj_id
+                    action_kwargs['action_type'] = 'alone'
+
+                    
+                    if self._condition != "tutorial":
+                        self.log_action_df(state,"take_victim",self._last_victim)
 
 
         # If the user chose to drop an object in its inventory
@@ -354,12 +360,13 @@ class HumanBrain(HumanAgentBrain):
                 self.__select_random_obj_in_range(state,
                                                   range_=self.__grab_range,
                                                   property_to_check="is_movable")
+            
             if obj_id:
                 action_kwargs['object_id'] = None
 
             elif self._last_victim != None:
                 # Check if victim dropped at its drop-off location
-                if self._last_victim['drop_location'] == self.current_location:
+                if self._last_victim['drop_location'] == self.current_location: 
                     # Check whether it is this player's job to drop this victim
                     if self._last_victim["area"] in self._my_areas or self._condition == "tutorial":
                         table_api.human_vics_saved_abs += 1
@@ -397,6 +404,8 @@ class HumanBrain(HumanAgentBrain):
 
                     if self._condition != "tutorial":
                         self.log_action_df(state,"drop_victim",self._last_victim,all_previous_dropped)
+
+                    # item.get("") is_collectable = False
 
 
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:

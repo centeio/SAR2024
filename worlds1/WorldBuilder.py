@@ -304,6 +304,7 @@ class CollectionGoal(WorldGoal):
         self.__progress = 0
 
     def goal_reached(self, grid_world):
+        # print(grid_world.current_nr_ticks)
         if grid_world.current_nr_ticks >= self.max_nr_ticks:
             return True
         return self.allVictimsPlaced(grid_world)
