@@ -77,36 +77,41 @@ def pick_agent_areas(agent_type):
         dry_pref = df.loc[df["pref_id"] == "dry", "preference_num"].values[0]
 
         # Determine task allocation based on preferences
-        if close_pref > far_pref:
+        if close_pref >= far_pref:
             if dry_pref > water_pref:
-                if close_pref >= dry_pref:
+                if close_pref >= dry_pref: # preference for closeness over soil
                     human_areas = ["A1", "B1", "C1", "D1"]
-                else:
+                else: # preference for dry soil is the highest
                     human_areas = ["A1", "A2", "D1", "D2"]
-            elif water_pref > dry_pref:
-                if close_pref >= water_pref:
+            elif water_pref > dry_pref: 
+                if close_pref >= water_pref: # preference for closeness over water
                     human_areas = ["A1", "B1", "C1", "D1"]
-                else:
+                else: # preference fot water is the highest
                     human_areas = ["B1", "B2", "C1", "C2"]
-            else:  # No soil preference
+            else:  # No soil preference - all close areas
                 human_areas = ["A1", "B1", "C1", "D1"]
 
         elif far_pref > close_pref:
             if dry_pref > water_pref:
-                if far_pref >= dry_pref:
+                if far_pref >= dry_pref: # preference for far is the highest
                     human_areas = ["A2", "B2", "C2", "D2"]
-                else:
+                else: # preference for dry is the highest
                     human_areas = ["A1", "A2", "D1", "D2"]
             elif water_pref > dry_pref:
-                if far_pref >= water_pref:
+                if far_pref >= water_pref: # preference for far is the highest
                     human_areas = ["A2", "B2", "C2", "D2"]
-                else:
+                else: # preference for water is the highest
                     human_areas = ["B1", "B2", "C1", "C2"]
-            else:  # No soil preference
+            else:  # No soil preference - all far areas
                 human_areas = ["A2", "B2", "C2", "D2"]
 
-        else:  # No distance preference
-            human_areas = ["A1", "A2", "B1", "B2"]
+        else: # No distance preference
+            if dry_pref > water_pref: # only cares about being dry
+                human_areas = ["A1", "A2", "D1", "D2"]
+            if dry_pref < water_pref: # only cares about being in water
+                human_areas = ["B1", "B2", "C1", "C2"]
+            else:  # No soil preference - doesn't have any preference
+                human_areas = ["A1", "A2", "B1", "B2"]
 
         print("Selected tasks for human:", human_areas)
     

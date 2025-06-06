@@ -405,8 +405,6 @@ class HumanBrain(HumanAgentBrain):
                     if self._condition != "tutorial":
                         self.log_action_df(state,"drop_victim",self._last_victim,all_previous_dropped)
 
-                    # item.get("") is_collectable = False
-
 
         elif action in [MoveNorth.__name__, MoveNorthEast.__name__, MoveEast.__name__, MoveSouthEast.__name__, MoveSouth.__name__, MoveSouthWest.__name__, MoveWest.__name__, MoveNorthWest.__name__]:
             if in_water:
