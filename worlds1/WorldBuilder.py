@@ -64,6 +64,29 @@ drop_height = 4
 
 ALL_AREAS = ["A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2"]
 
+def get_output_list(dry, water, far, close):
+    dry_far = dry + far
+    dry_close = dry + close
+    water_far = water + far
+    water_close = water + close
+
+    pair_values = {
+        'dry_far': (dry_far, ["A2", "D2"]),
+        'dry_close': (dry_close, ["A1", "D1"]),
+        'water_far': (water_far, ["B2", "C2"]),
+        'water_close': (water_close, ["B1", "C1"])
+    }
+
+    values = [v[0] for v in pair_values.values()]
+    if all(v == values[0] for v in values):
+        return sorted(["A1", "A2", "B1", "B2"], key=lambda x: (x[0], int(x[1])))
+
+    sorted_pairs = sorted(pair_values.items(), key=lambda x: x[1][0], reverse=True)
+    top_two_lists = sorted_pairs[0][1][1] + sorted_pairs[1][1][1]
+
+    return sorted(set(top_two_lists), key=lambda x: (x[0], int(x[1])))
+
+
 
 #Choose Will Agent's areas based on human preferences (on file):
 def pick_agent_areas(agent_type):
@@ -77,48 +100,14 @@ def pick_agent_areas(agent_type):
         dry_pref = df.loc[df["pref_id"] == "dry", "preference_num"].values[0]
 
         # Determine task allocation based on preferences
-        if close_pref >= far_pref:
-            if dry_pref > water_pref:
-                if close_pref >= dry_pref: # preference for closeness over soil
-                    human_areas = ["A1", "B1", "C1", "D1"]
-                else: # preference for dry soil is the highest
-                    human_areas = ["A1", "A2", "D1", "D2"]
-            elif water_pref > dry_pref: 
-                if close_pref >= water_pref: # preference for closeness over water
-                    human_areas = ["A1", "B1", "C1", "D1"]
-                else: # preference fot water is the highest
-                    human_areas = ["B1", "B2", "C1", "C2"]
-            else:  # No soil preference - all close areas
-                human_areas = ["A1", "B1", "C1", "D1"]
-
-        elif far_pref > close_pref:
-            if dry_pref > water_pref:
-                if far_pref >= dry_pref: # preference for far is the highest
-                    human_areas = ["A2", "B2", "C2", "D2"]
-                else: # preference for dry is the highest
-                    human_areas = ["A1", "A2", "D1", "D2"]
-            elif water_pref > dry_pref:
-                if far_pref >= water_pref: # preference for far is the highest
-                    human_areas = ["A2", "B2", "C2", "D2"]
-                else: # preference for water is the highest
-                    human_areas = ["B1", "B2", "C1", "C2"]
-            else:  # No soil preference - all far areas
-                human_areas = ["A2", "B2", "C2", "D2"]
-
-        else: # No distance preference
-            if dry_pref > water_pref: # only cares about being dry
-                human_areas = ["A1", "A2", "D1", "D2"]
-            if dry_pref < water_pref: # only cares about being in water
-                human_areas = ["B1", "B2", "C1", "C2"]
-            else:  # No soil preference - doesn't have any preference
-                human_areas = ["A1", "A2", "B1", "B2"]
-
-        print("Selected tasks for human:", human_areas)
+        human_areas = get_output_list(dry_pref, water_pref, far_pref, close_pref)
     
     else:
         human_areas = ["A1", "A2", "B1", "B2"]
 
     agent_areas = [area for area in ALL_AREAS if area not in human_areas]
+
+    print("human_areas", human_areas)
 
     return agent_areas, human_areas
 
