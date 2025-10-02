@@ -367,7 +367,9 @@ class HumanBrain(HumanAgentBrain):
             elif self._last_victim != None:
                 # Check if victim dropped at its drop-off location
                 if self._last_victim['drop_location'] == self.current_location: 
-                    # Check whether it is this player's job to drop this victim
+                    # TODO check bug in this part of the code: there is a mistake in the counts of victims.
+                    # It does not correspond to what's logged in actions (actions is correct)
+                    # This code is supposed to count how many victims from their areas or another agent's areas each teammate succesfully returned to the safezone
                     if self._last_victim["area"] in self._my_areas or self._condition == "tutorial":
                         table_api.human_vics_saved_abs += 1
                     else:
