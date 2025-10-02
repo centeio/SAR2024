@@ -2,7 +2,7 @@
 This is the repository for a user study on willingness-based task allocation. The repository uses the [MATRX software package](https://matrx-software.com/) and forks [TUD-Collaborative-AI-2024](https://github.com/rsverhagen94/TUD-Collaborative-AI-2024) to create a simulated search and rescue task in a two-dimensional grid environment. You can find more information on installation and structure of the repository in the original repository.
 The environment presents four areas A, B, C, and D, with two sub-areas, 1 and 2, each. Areas A and D are on dry ground whereas C and D are in water. Participants’ movement would be laggy in water, and it would also produce a safety beeping sound.
 
-![environment](https://github.com/centeio/SAR2024/tree/main/images/environment_screen.png)
+![environment](images/environment_screen.png)
 ## Mission
 here are two victims in each area (randomly assigned per mission) that need to be brought to the safe zone in the center, by either the human participant (wearing an orange hat) or the virtual robot. Participants have full visibility of the whole grid, and they can move freely, pick up and drop off any victim, using the keyboard. Victims need to be brought to the safe zone in a specific order: looking at the safe zone, victims should be brought in line by line, from top left to bottom right, as if one is reading in English. There is a time limit of five minutes per mission to bring all victims to the safe zone, but this is plenty to complete the mission.
 #### Willingness
